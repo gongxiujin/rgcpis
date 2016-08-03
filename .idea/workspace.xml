@@ -2,53 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="7d8ebd39-eb6b-4e96-afc5-1185272a5783" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/dataSources.ids" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/0626555fde49_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/4ad68e46366c_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/README" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/rgcpis/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/alembic.ini" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/rgcpis/app.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/cee23ffa02c3_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/rgcpis/config/default.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/rgcpis/templates/auth/echo_log.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/env.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/versions/ff15f80c4587_.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/rgcpis/templates/flash.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/rgcpis/service/forms.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/rgcpis/templates/auth/index.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/rgcpis/service/logic.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/rgcpis/templates/macros.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/rgcpis/service/models.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/rgcpis.iml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/migrations/script.py.mako" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vagrant.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/rgcpis/service/views.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/wsgi.py" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/gong.iml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/flaskg/__init__.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/flaskg/app.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/flaskg/auth/logic.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/flaskg/auth/models.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/flaskg/auth/view.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/flaskg/config/default.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/flaskg/templates/auth/index.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/flaskg/utils/__init__.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/flaskg/utils/auth.py" afterPath="" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/flaskg/auth/__init__.py" afterPath="$PROJECT_DIR$/rgcpis/config/__init__.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/flaskg/config/__init__.py" afterPath="$PROJECT_DIR$/rgcpis/service/__init__.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/flaskg/extensions.py" afterPath="$PROJECT_DIR$/rgcpis/extensions.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/manage.py" afterPath="$PROJECT_DIR$/manage.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/manager.py" afterPath="$PROJECT_DIR$/manager.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/requirements.txt" afterPath="$PROJECT_DIR$/requirements.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="gong.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -176,11 +130,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="default.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="default.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/rgcpis/config/default.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.56">
+            <state vertical-scroll-proportion="0.0">
               <caret line="31" column="39" selection-start-line="31" selection-start-column="39" selection-end-line="31" selection-end-column="39" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="requirements.txt" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/requirements.txt">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.5397653">
+              <caret line="18" column="0" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -224,7 +188,6 @@
         <option value="$PROJECT_DIR$/rgcpis/templates/macros.html" />
         <option value="$PROJECT_DIR$/rgcpis/service/forms.py" />
         <option value="$PROJECT_DIR$/rgcpis/templates/flash.html" />
-        <option value="$PROJECT_DIR$/requirements.txt" />
         <option value="$PROJECT_DIR$/manager.py" />
         <option value="$PROJECT_DIR$/rgcpis/service/models.py" />
         <option value="$PROJECT_DIR$/rgcpis/templates/auth/echo_log.html" />
@@ -234,6 +197,7 @@
         <option value="$PROJECT_DIR$/manage.py" />
         <option value="$PROJECT_DIR$/rgcpis/service/views.py" />
         <option value="$PROJECT_DIR$/rgcpis/config/default.py" />
+        <option value="$PROJECT_DIR$/requirements.txt" />
       </list>
     </option>
   </component>
@@ -634,7 +598,7 @@
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.26625" sideWeight="0.4947193" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.26403558" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.4275" sideWeight="0.4970213" order="12" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4275" sideWeight="0.4970213" order="12" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.52875" sideWeight="0.50528073" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
@@ -922,14 +886,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/requirements.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.08996089">
-          <caret line="3" column="18" selection-start-line="3" selection-start-column="18" selection-end-line="3" selection-end-column="18" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$APPLICATION_CONFIG_DIR$/consoles/db/9905f36a-ab1a-4ae1-a38d-229a24d245f5/console.sql">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -1108,8 +1064,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/rgcpis/config/default.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.56">
+        <state vertical-scroll-proportion="0.0">
           <caret line="31" column="39" selection-start-line="31" selection-start-column="39" selection-end-line="31" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/requirements.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.5397653">
+          <caret line="18" column="0" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
           <folding />
         </state>
       </provider>
