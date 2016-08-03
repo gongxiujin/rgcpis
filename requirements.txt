@@ -1,4 +1,4 @@
-
+gunicorn==19.6.0
 dominate==2.2.0
 Flask==0.10.1
 Flask-Login==0.3.2
