@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dataSourceStorageLocal">
+    <data-source name="MySQL - cpis_db@localhost" uuid="9905f36a-ab1a-4ae1-a38d-229a24d245f5">
+      <secret-storage>master_key</secret-storage>
+      <user-name>root</user-name>
+      <schema-pattern>cpis_db.*</schema-pattern>
+      <default-schemas>cpis_db.*</default-schemas>
+    </data-source>
+  </component>
+</project>

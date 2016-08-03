@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/gong.iml" filepath="$PROJECT_DIR$/.idea/gong.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/rgcpis.iml" filepath="$PROJECT_DIR$/.idea/rgcpis.iml" />
     </modules>
   </component>
 </project>

@@ -1,0 +1,7 @@
+<div class="col-md-3">
+{% for record in records %}
+{% if record.result %}
+<p>{{ record.ip }}:{{ record.result }}</p>
+{% endif %}
+{% endfor %}
+</div>
