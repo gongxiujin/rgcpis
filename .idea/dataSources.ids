@@ -26,4 +26,7 @@
       <primary-key name="PRIMARY" columns="id"/>
     </table>
   </data-source>
+  <data-source name="MySQL - cpis_db@172.20.0.51" uuid="59d17100-cb5d-48d0-867c-fb4f55d9ed74">
+    <database-info product="" version="" jdbc-version="" driver-name="" driver-version=""/>
+  </data-source>
 </component>
