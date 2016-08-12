@@ -18,9 +18,9 @@
 <body>
 {% from 'macros.html' import horizontal_field, inline_field, render_pagination_with_number with context %}
 {% block body %}
-<div class="container">
+<div class="">
     <nav class="navbar navbar-inverse " role="navigation" style="margin-bottom: 0">
-        <div class="container-fluid">
+        <div class="container">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
                         data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
@@ -44,7 +44,7 @@
     {% block messages %}
         {% include 'flash.html' %}
     {% endblock %}
-    <div class="row-fluid ">
+    <div class="row-fluid container">
     <ul class="nav nav-pills nav-justified">
       <li role="presentation"  class="active"><a id="service" href="#">服务器列表</a></li>
       <li role="presentation" ><a id="log" href="#">操作日志</a></li>
@@ -55,7 +55,7 @@
             </div>
             <div class="panel-body">
 
-                <form class="form-inline" action="{{ url_for('service.add_machine') }}" method="post">
+                <form class="form-inline" action="{{ url_for('service.add_machine') }}" method="post" style="padding-bottom: 10px">
                 <div class="form-group">
                 <label for="ipstart">IP地址范围</label>
                 <input type="text" class="form-control" name="ipstart" id="ipstart" placeholder="开始ip段地址">
@@ -69,11 +69,11 @@
                         <option value="off">关机</option>
                         <option value="restart">重启</option>
                     </select>
-                <button type="submit" class="btn btn-default" id="submit">提交</button>
+                <button type="submit" class="btn btn-primary" id="submit">提交</button>
                 </form>
                 <table class="table table-striped table-bordered table-hover model-list col-md-12">
                     <thead>
-                    <th class="col-md-1">全选</th>
+                    <th class="col-md-1"><input type="checkbox" id="tage-all">全选</th>
                     <th class="col-md-3"><a href="{{ url_for('service.index', ip=ip|order_status(), status=status) }}">IP</a></th>
                     <th class="col-md-3"><a href="{{ url_for('service.index', status=status|order_status(), ip=ip) }}">状态</a></th>
                     <th>操作</th>

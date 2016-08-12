@@ -31,18 +31,18 @@ def start_query_machine_queue():
         time.sleep(300)
 
 
-@manager.command
-def shutdown_query_machine_queue():
-    from apscheduler.schedulers.blocking import BlockingScheduler
-    sched = BlockingScheduler()
-    runsche = sched.get_job(SSH_QUEUE_ID)
-    runsche.pause()
+# @manager.command
+# def shutdown_query_machine_queue():
+#     from apscheduler.schedulers.blocking import BlockingScheduler
+#     sched = BlockingScheduler()
+#     runsche = sched.get_job(SSH_QUEUE_ID)
+#     runsche.pause()
 
 
 @manager.option('-offset')
 def init_service_machines(offset):
     with app.app_context():
-        print 'start'
+        current_app.logger.info('strt')
         services = current_app.config['SERVICE_MACHINE_IP']
         for ip in services:
             startips = services[ip][0].split('.')

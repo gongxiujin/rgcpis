@@ -7,6 +7,7 @@ from flask_login import current_app
 from rgcpis.service.models import MachineRecord, Service
 from threading import Thread
 
+
 IPMI_OFFSET = 8
 
 
@@ -26,7 +27,7 @@ def validate_ipaddress(startip, endip):
             return startips, endips
 
 def thread_ssh(formt_ipmiip, option):
-    from manager import app
+    from manage import app
     with app.app_context():
         for ip_dict in formt_ipmiip:
             ssh_add = 'ipmitool -H {IPA} -U USERID -P PASSW0RD -I lanplus chassis power {option}'.format(
@@ -71,7 +72,7 @@ def get_diffence_set_ips(result, startip, endip):
 
 
 def ssh_query_activity_machine():
-    from manager import app
+    from manage import app
     print 'start'
     with app.app_context():
         all_ips = current_app.config['SERVICE_MACHINE_IP']

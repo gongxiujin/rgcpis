@@ -19,6 +19,8 @@ class DefaultConfig(object):
 
     WTF_CSRF_SECRET_KEY = 'donottellyou'
 
+    SEND_LOGS = False
+
     LOGIN_VIEW = "auth.login"
     REAUTH_VIEW = "auth.reauth"
     LOGIN_MESSAGE_CATEGORY = "error"
