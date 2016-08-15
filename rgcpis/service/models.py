@@ -8,10 +8,13 @@ class Service(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     ip = db.Column(db.String(15), nullable=False)
+    ip_mac = db.Column(db.String(30))
     ipmi_ip = db.Column(db.String(15), nullable=False)
+    ipmi_ip_mac = db.Column(db.String(30))
     date_joined = db.Column(db.DateTime, default=datetime.now())
     last_update = db.Column(db.DateTime, default=datetime.now())
     status = db.Column(db.Integer, default=0, nullable=True)
+    version_id = db.Column(db.ForeignKey('service_version.id'), nullable=True)
     update_ip = db.Column(db.String(15))
 
     def __init__(self, ip):
@@ -30,6 +33,14 @@ class Service(db.Model):
     def get_ipmiip(self):
         ipmi_ips = [str(int(s)) for s in self.ipmi_ip.split('.')]
         return '.'.join(ipmi_ips)
+
+    @property
+    def version(self):
+        if self.version_id:
+            service = ServiceVersion.query.filter_by(id=self.version_id).first()
+            return service.version
+        else:
+            return None
 
     @staticmethod
     def get_ipmiips(realips):
@@ -59,3 +70,20 @@ class MachineRecord(db.Model):
     def save(self):
         db.session.add(self)
         db.session.commit()
+
+
+class ServiceVersion(db.Model):
+    __tablename__ = "service_version"
+
+    id = db.Column(db.Integer, primary_key=True)
+    version = db.Column(db.String(30), nullable=False)
+    create_time = db.Column(db.DateTime(), default=datetime.now())
+
+    def __init__(self, version):
+        self.version = version
+        self.create_time = datetime.now()
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+        return self

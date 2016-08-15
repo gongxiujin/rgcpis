@@ -25,8 +25,10 @@ class DefaultConfig(object):
     SECRET_KEY = '470cd86a9656c3e12afca890df438a22'
     SECRET_SALT = 'U dont know what is this'
     SQLALCHEMY_TRACK_MODIFICATIONS = True
+    WTF_CSRF_CHECK_DEFAULT = False
     # url_blue_point
     AUTH_URL = '/gong'
+    USER_URL = '/user'
     SERVICE_URL = '/service'
 
     SERVICE_MACHINE_IP = {1: ['172.20.1.1', '172.20.1.250'],

@@ -25,8 +25,9 @@ def validate_ipaddress(startip, endip):
         else:
             return startips, endips
 
+
 def thread_ssh(formt_ipmiip, option):
-    from manager import app
+    from manage import app
     with app.app_context():
         for ip_dict in formt_ipmiip:
             ssh_add = 'ipmitool -H {IPA} -U USERID -P PASSW0RD -I lanplus chassis power {option}'.format(
@@ -42,14 +43,14 @@ def thread_ssh(formt_ipmiip, option):
 
 def ssh_machine_shell(starts, ends, option):
     ips = []
-    formt_ipmiip=[]
+    formt_ipmiip = []
     iprange = xrange(int(starts[-1]), int(ends[-1]) + 1)
     for i in iprange:
         starts[-1] = str(i)
         ips.append('.'.join(starts))
     for ip in ips:
         service = Service.query.filter_by(ip=ip).first()
-        formt_ipmiip.append({'real_ip':ip, 'ipmi_ip':service.get_ipmiip()})
+        formt_ipmiip.append({'real_ip': ip, 'ipmi_ip': service.get_ipmiip()})
     thread = Thread(target=thread_ssh, args=(formt_ipmiip, option))
     thread.start()
     # thread_ssh(formt_ipmiip, option)
@@ -71,12 +72,13 @@ def get_diffence_set_ips(result, startip, endip):
 
 
 def ssh_query_activity_machine():
-    from manager import app
+    from manage import app
     with app.app_context():
         all_ips = current_app.config['SERVICE_MACHINE_IP']
         activity_services = []
         for ip_content in all_ips.keys():
-            ssh_query = 'fping -a -g {ipstart} {ipend}'.format(ipstart=all_ips[ip_content][0], ipend=all_ips[ip_content][1])
+            ssh_query = 'fping -a -g {ipstart} {ipend}'.format(ipstart=all_ips[ip_content][0],
+                                                               ipend=all_ips[ip_content][1])
             result = pexpect.spawn(ssh_query)
             while result.isalive():
                 time.sleep(2)
@@ -110,5 +112,13 @@ def init_service_machines():
 def get_service_status(status):
     return current_app.config['SERVICE_STATUS'][status]
 
+
 def order_status(order):
     return int(not order)
+
+def renew_machine_options(service_ids):
+    for service_id in service_ids:
+        pass
+
+def upload_machine_options(service, option):
+    pass
