@@ -1,4 +1,4 @@
-from flask_script import Manager, Server, Shell
+from flask_script import Manager, Server, Shell, prompt, prompt_pass
 from rgcpis.app import create_app
 from rgcpis.extensions import db
 import time
@@ -7,6 +7,7 @@ from flask_migrate import MigrateCommand
 from rgcpis.service.logic import ssh_query_activity_machine
 from rgcpis.service.models import Service
 from rgcpis.config.default import DefaultConfig as config
+from rgcpis.user.logic import create_admin_user
 
 app = create_app(config)
 manager = Manager(app)
@@ -18,7 +19,10 @@ manager.add_command('db', MigrateCommand)
 
 def make_shell_context():
     return dict(app=current_app, db=db)
+
+
 manager.add_command("shell", Shell(make_context=make_shell_context))
+
 
 @manager.command
 def start_query_machine_queue():
@@ -56,6 +60,18 @@ def init_service_machines(offset):
                     new_service.set_ipmiip(offset)
                     new_service.save()
     print 'over'
+
+
+@manager.option('-u', '--username', dest='username')
+@manager.option('-p', '--password', dest='password')
+def create_admin(username=None, password=None, email=None):
+    """Creates the admin user."""
+
+    if not (username and password and email):
+        username = prompt("Username")
+        password = prompt_pass("Password")
+
+    create_admin_user(username=username, password=password)
 
 
 if __name__ == '__main__':
