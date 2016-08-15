@@ -4,20 +4,17 @@
     <title>登录</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="user-scalable=0,width=device-width" />
-    <style>
-        nav .nav > .active {
-            border-bottom: 3px solid #454c59
-        }
-    </style>
-{#    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.0.0.min.js"></script>#}
-{#    <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">#}
+    <script src="{{ url_for('static', filename='js/jquery-3.0.0.min.js') }}"></script>
+    <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
 </head>
 <body>
 {% from 'macros.html' import horizontal_field with context %}
 {% block body %}
 <div class="container">
     <div class="content_2">
-    <form action="{{ url_for('users.login') }}" method="post">
+    <div class="panel panel-default col-md-7" style="margin: 13em 0 0 13em">
+  <div class="panel-body">
+      <form action="{{ url_for('users.login') }}" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 {#        {{ horizontal_field(form.csrf_token) }}#}
         {{ horizontal_field(form.login) }}
@@ -37,12 +34,15 @@
         </p>
         {{ horizontal_field(form.submit) }}
     </form>
+  </div>
+</div>
+
     </div>
 
 </div>
 {% endblock %}
 
-{#<script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>#}
-{#<script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>#}
+<script src="{{ url_for('static', filename='js/jquery-3.0.0.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 </body>
 </html>

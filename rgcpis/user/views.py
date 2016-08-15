@@ -14,6 +14,8 @@ def login():
     """
     Logs the user in
     """
+    if current_user is not None and current_user.is_authenticated:
+        return redirect(url_for("service.index"))
 
     form = LoginForm(request.form)
     if form.validate_on_submit():

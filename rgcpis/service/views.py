@@ -5,6 +5,7 @@ from flask_login import current_app, login_required, current_user
 from flask_login import request
 from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, renew_machine_options, upload_machine_options
 from rgcpis.service.models import Service, MachineRecord, ServiceVersion
+from rgcpis.utils.auth import json_response, response_file
 from rgcpis.utils.script import options_service
 
 service = Blueprint('service', __name__)
@@ -114,3 +115,40 @@ def renew_services():
     flash(u'已开始', 'success')
     return redirect(request.referrer)
 
+
+@service.route("/get_service_status")
+def get_service_status():
+    request_ip = request.remote_addr
+    service = Service.query.filter_by(ip=request_ip).first()
+    if not service:
+        return json_response(1, error_msg='error')
+    if service.status in [0, 1]:
+        filename = ''
+        configs = ''
+    else:
+        if service.status == 5:
+            filename = ''
+            configs = ''
+        else:
+            filename = ''
+            configs = ''
+    return response_file(data=configs, filename=filename)
+
+
+@service.route("/service_config_file")
+def service_config_file():
+    request_ip = request.remote_addr
+    service = Service.query.filter_by(ip=request_ip).first()
+    if not service:
+        return json_response(1, error_msg='error')
+    if service.status in [0, 1]:
+        filename = ''
+        configs = ''
+    else:
+        if service.status == 5:
+            filename = ''
+            configs = ''
+        else:
+            filename = ''
+            configs = ''
+    return response_file(data=configs, filename=filename)

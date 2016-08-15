@@ -4,10 +4,10 @@
     <title>服务器管理</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="user-scalable=0,width=device-width" />
-    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.0.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/jquery-3.0.0.min.js') }}"></script>
     <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../css/bootstrap.min.css">
-    <link rel="stylesheet" href="../css/font-awesome.min.css">
+{#    <link rel="stylesheet" href="../css/bootstrap.min.css">#}
+{#    <link rel="stylesheet" href="../css/font-awesome.min.css">#}
 </head>
 <body>
 {% from 'macros.html' import horizontal_field, inline_field, render_pagination_with_number with context %}
@@ -73,8 +73,7 @@
             <div class="panel-heading page-head">
                 <h3 class="panel-title">服务器管理</h3>
             </div>
-            <div class="panel-body">
-
+                <div class="panel-body">
                 <form class="form-inline" action="{{ url_for('service.machine_option') }}" method="post">
                 <div class="form-group">
                 <label for="ipstart">IP地址范围</label>
@@ -91,14 +90,16 @@
                     </select>
                 <button type="submit" class="btn btn-primary" id="submit">提交</button>
                 </form>
-                <form action="{{ url_for('service.renew_services') }}" class="form-inline" method="post">
 {#                <button class="btn btn-danger"  name="operation" value="hidden" style="margin: 10px 0 10px 0">重装机器</button>#}
+                </div>
+                <form action="{{ url_for('service.renew_services') }}" class="form-inline" method="post">
                 <a href="#" data-toggle="modal" class="btn btn-danger" data-target="#reloadmodal" title="重装机器" >重装机器</a>
                 <table class="table table-striped table-bordered table-hover model-list col-md-12">
                     <thead>
                     <th class="col-md-1"><input type="checkbox" onClick="toggle(this)"/>全选</th>
                     <th class="col-md-3"><a href="{{ url_for('service.index', ip=ip|order_status(), status=status) }}">IP</a></th>
                     <th class="col-md-3"><a href="{{ url_for('service.index', status=status|order_status(), ip=ip) }}">状态</a></th>
+                    <th class="col-md-3">版本号</th>
                     <th>操作</th>
                     </thead>
                     <tbody>
@@ -107,6 +108,7 @@
                         <td><input type="checkbox" name="service_id" value="{{ service.id }}"></td>
                         <td>{{ service.ip }}</td>
                         <td>{{ service.status|service_status() }}</td>
+                        <td>{{ service.version }}</td>
                         <td>
                             <a href="{{ url_for("service.single_service_option", options="restart", service_id=service.id) }}" onclick="return confirm('请确认是否要重启');"><span class="glyphicon glyphicon-repeat" aria-hidden="true" title="重启"></span></a>
                             {% if service.status == 1 %}
@@ -117,7 +119,7 @@
                             {% endif %}
                             {% endif %}
 {#                        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal"></button>#}
-                            <a href="#" data-toggle="modal" data-target="#myModal" title="备份" data-whatever="{{ service.id }}"><span class="glyphicon glyphicon-cloud-upload" aria-hidden="true" title="重启"></span></a>
+                            <a href="#" data-toggle="modal" data-target="#myModal" data-whatever="{{ service.id }}"><span class="glyphicon glyphicon-cloud-upload" aria-hidden="true" title="备份并上传版本"></span></a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -148,7 +150,7 @@
                       </div>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                        <button type="submit" class="btn btn-primary" onclick="return confirm('请确认是否要重装');">提交</button>
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('请确认是否要重装该机器');">提交</button>
                       </div>
                     </div>
                   </div>
@@ -157,7 +159,6 @@
                 <div class="pull-left col-md-12" style="padding-bottom: 10px">
                     {{ render_pagination_with_number(services, url_for('service.index', ip=ip, status=status)) }}
                 </div>
-            </div>
 
         </div>
         <div class="embed-responsive embed-responsive-4by3" id="log_congent" style="display: None;">
@@ -184,7 +185,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-        <button type="submit" class="btn btn-primary" onclick="return confirm('请确认是否要备份机器');">提交</button>
+        <button type="submit" class="btn btn-primary" onclick="return confirm('请确认是否要备份该机器');">提交</button>
       </div>
     </form>
     </div>
@@ -192,9 +193,8 @@
 </div>
 </div>
 {% endblock %}
-
-<script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
-<script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="{{ url_for('static', filename='js/jquery-3.0.0.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 <script type="application/javascript">
     $(function(){
         $('#log').on('click', function(){

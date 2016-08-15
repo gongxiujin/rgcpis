@@ -14,12 +14,12 @@ is_username = regexp(USERNAME_RE,
 
 
 class LoginForm(Form):
-    login = StringField("Username or E-Mail Address", validators=[
-        DataRequired(message="A Username is required.")]
+    login = StringField(u"用户名", validators=[
+        DataRequired(message=u"用户名是必填项")]
     )
 
-    password = PasswordField("Password", validators=[
-        DataRequired(message="A Password is required.")])
+    password = PasswordField(u"密码", validators=[
+        DataRequired(message=u"密码是必填项.")])
 
     remember_me = BooleanField("Remember Me", default=False)
 
