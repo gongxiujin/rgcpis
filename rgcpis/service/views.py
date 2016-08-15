@@ -6,7 +6,6 @@ from flask_login import request
 from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, renew_machine_options, upload_machine_options
 from rgcpis.service.models import Service, MachineRecord, ServiceVersion
 from rgcpis.utils.auth import json_response, response_file
-from rgcpis.utils.script import options_service
 
 service = Blueprint('service', __name__)
 COPAY_PER_PAGE = 20
