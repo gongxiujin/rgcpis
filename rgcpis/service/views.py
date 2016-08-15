@@ -114,10 +114,3 @@ def renew_services():
     flash(u'已开始', 'success')
     return redirect(request.referrer)
 
-
-@service.route('/buck_up/<int:service_id>')
-def back_up_service(service_id):
-    service = Service.query.filter_by(id=service_id).first_or_404()
-    options_service('backup', service)
-    flash(u'备份已开始，请留意日志!', 'success')
-    return redirect(request.referrer)
