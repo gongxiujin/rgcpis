@@ -7,6 +7,7 @@ from flask_login import current_app
 from rgcpis.service.models import MachineRecord, Service
 from threading import Thread
 
+
 IPMI_OFFSET = 8
 
 
@@ -73,17 +74,22 @@ def get_diffence_set_ips(result, startip, endip):
 
 def ssh_query_activity_machine():
     from manage import app
+    print 'start'
     with app.app_context():
         all_ips = current_app.config['SERVICE_MACHINE_IP']
         activity_services = []
+        print 'before find'
         for ip_content in all_ips.keys():
             ssh_query = 'fping -a -g {ipstart} {ipend}'.format(ipstart=all_ips[ip_content][0],
                                                                ipend=all_ips[ip_content][1])
             result = pexpect.spawn(ssh_query)
+            print 'before while'
             while result.isalive():
+                print 'in while'
                 time.sleep(2)
             result = result.read().strip().split('\r\n')
             activity_services += result
+        print activity_services
         services = Service.query.all()
         for service in services:
             if service.ip in activity_services:
@@ -91,6 +97,7 @@ def ssh_query_activity_machine():
             else:
                 service.status = 0
             service.save()
+        print 'end one'
 
 
 def init_service_machines():
