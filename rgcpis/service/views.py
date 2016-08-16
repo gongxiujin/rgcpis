@@ -68,7 +68,7 @@ def single_service_option(options, service_id):
     if service.status == 1 and options == 'start':
         flash(u"已经开机", "danger")
     else:
-        ssh_machine_shell(service.id, service.id, options)
+        ssh_machine_shell(service.ip, option=options)
         flash(u'重启成功', "success")
     return redirect(request.referrer)
 
@@ -104,7 +104,13 @@ def echolog():
 @csrf.exempt
 def renew_services():
     version = request.form.get('version')
+    option = request.form.get('option')
     ids = request.form.getlist('service_id', type=int)
+    for service_id in ids:
+        service = Service.query.filter_by(id=service_id)
+        if option == 'now':
+            ssh_machine_shell(service.ip, option='restart')
+
     for id in ids:
         service = Service.query.filter_by(id=id).first()
         if service.status == 1:
@@ -134,20 +140,21 @@ def get_service_status():
     return response_file(data=configs, filename=filename)
 
 
-@service.route("/service_config_file")
+@service.route("/service_config_file/")
 def service_config_file():
     request_ip = request.remote_addr
+    print request_ip
     service = Service.query.filter_by(ip=request_ip).first()
-    if not service:
-        return json_response(1, error_msg='error')
-    if service.status in [0, 1]:
-        filename = ''
-        configs = ''
-    else:
-        if service.status == 5:
-            filename = ''
-            configs = ''
-        else:
-            filename = ''
-            configs = ''
+    # if not service:
+    #     return json_response(1, error_msg='error')
+    # if service.status in [0, 1]:
+    filename = 'aoe_b.ipxe'
+    configs = '#!ipxe\nsanboot --no-describe --drive 0x80'
+    # else:
+    #     if service.status == 5:
+    # filename = 'aoe_a.ipxe'
+    # configs = "#!ipxe\nset keep-san 1\nchain http://172.20.0.51/winpe/winpe/wimboot_a.ipxe"
+    #     else:
+    #         filename = ''
+    #         configs = ''
     return response_file(data=configs, filename=filename)

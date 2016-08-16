@@ -42,13 +42,16 @@ def thread_ssh(formt_ipmiip, option):
             record.save()
 
 
-def ssh_machine_shell(starts, ends, option):
+def ssh_machine_shell(starts, ends=None, option=None):
     ips = []
     formt_ipmiip = []
-    iprange = xrange(int(starts[-1]), int(ends[-1]) + 1)
-    for i in iprange:
-        starts[-1] = str(i)
-        ips.append('.'.join(starts))
+    if not ends:
+        ips = [starts]
+    else:
+        iprange = xrange(int(starts[-1]), int(ends[-1]) + 1)
+        for i in iprange:
+            starts[-1] = str(i)
+            ips.append('.'.join(starts))
     for ip in ips:
         service = Service.query.filter_by(ip=ip).first()
         formt_ipmiip.append({'real_ip': ip, 'ipmi_ip': service.get_ipmiip()})
