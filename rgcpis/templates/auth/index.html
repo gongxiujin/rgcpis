@@ -6,6 +6,11 @@
     <meta name="viewport" content="user-scalable=0,width=device-width" />
     <script src="{{ url_for('static', filename='js/jquery-3.0.0.min.js') }}"></script>
     <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <style>
+        .right-label{
+            text-align: right;
+        }
+    </style>
 {#    <link rel="stylesheet" href="../css/bootstrap.min.css">#}
 {#    <link rel="stylesheet" href="../css/font-awesome.min.css">#}
 </head>
@@ -108,8 +113,9 @@
                         <td><input type="checkbox" name="service_id" value="{{ service.id }}"></td>
                         <td>{{ service.ip }}</td>
                         <td>{{ service.status|service_status() }}</td>
-                        <td>{{ service.version }}</td>
+                        <td><p title="{{ service.version_description }}">{{ service.version }}</p></td>
                         <td>
+{#                            {% if service in [0, 1] %}#}
                             <a href="{{ url_for("service.single_service_option", options="restart", service_id=service.id) }}" onclick="return confirm('请确认是否要重启');"><span class="glyphicon glyphicon-repeat" aria-hidden="true" title="重启"></span></a>
                             {% if service.status == 1 %}
                             <a href="{{ url_for("service.single_service_option", options="shutdown", service_id=service.id) }}" onclick="return confirm('请确认是否要关机');"><span class="glyphicon glyphicon-off" aria-hidden="true" title="关机"></span></a>
@@ -118,8 +124,9 @@
                                 <a href="{{ url_for("service.single_service_option", options="start", service_id=service.id) }}" onclick="return confirm('请确认是否要开机');"><span class="glyphicon glyphicon-play" aria-hidden="true" title="开机"></span></a>
                             {% endif %}
                             {% endif %}
-{#                        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal"></button>#}
                             <a href="#" data-toggle="modal" data-target="#myModal" data-whatever="{{ service.id }}"><span class="glyphicon glyphicon-cloud-upload" aria-hidden="true" title="备份并上传版本"></span></a>
+{#                            {% endif %}#}
+{#                        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal"></button>#}
                         </td>
                     </tr>
                     {% endfor %}
@@ -170,7 +177,7 @@
 <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
   <div class="modal-dialog">
     <div class="modal-content">
-    <form action="#" method="post" class="form-inline">
+    <form action="#" method="post">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         <h4 class="modal-title">版本上传</h4>
@@ -178,9 +185,17 @@
       <div class="modal-body">
 
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-          <div class="form-group">
-            <label for="version">新系统版本:</label>
-              <input type="text" name="new_version" class="form-control" id="new_version">
+          <div class="form-group row">
+            <label class="col-md-4 control-label right-label" for="version">新系统版本:</label>
+              <div class="col-md-6">
+                  <input type="text" name="new_version" class="form-control" id="new_version">
+              </div>
+          </div>
+          <div class="form-group row">
+            <label for="description" class="col-md-4 control-label right-label">版本描述:</label>
+              <div class="col-md-6">
+                <textarea name="description" id="description" cols="29"></textarea>
+              </div>
           </div>
       </div>
       <div class="modal-footer">

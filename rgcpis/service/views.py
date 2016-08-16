@@ -25,7 +25,6 @@ order_status = {1: 'desc', 0: 'asc'}
 @service.route('/')
 @login_required
 def index():
-    user = current_user
     if current_user is None and not current_user.is_authenticated:
         return redirect(url_for("users.login"))
 
@@ -73,21 +72,34 @@ def single_service_option(options, service_id):
     return redirect(request.referrer)
 
 
-@service.route('/service_options/<int:service_id>', methods=["GET", "POST"])
-def renew_service(service_id):
-    service = Service.query.filter_by(id=service_id).first()
-    renew_machine_options(service.ip)
-    flash(u'机器正在重装中，请注意日志', 'success')
-    return redirect(request.referrer)
-
+# @service.route('/service_options/<int:service_id>', methods=["GET", "POST"])
+# def renew_service(service_id):
+#     service = Service.query.filter_by(id=service_id).first()
+#     renew_machine_options(service.ip)
+#     flash(u'机器正在重装中，请注意日志', 'success')
+#     return redirect(request.referrer)
+VERSION_RE = r'(\d{0,3}\.){1,2}(\d{0,3})'
 
 @service.route('/service_upload/<int:service_id>', methods=["POST"])
 def service_upload(service_id):
-    version = request.form.get("new_version", type=float)
-    option = request.form.get("option")
-    if version:
+    import re
+    version = request.form.get("new_version")
+    mach = re.match(VERSION_RE, version)
+    if not mach:
+        flash(u'版本号格式错误', 'danger')
+    description = request.form.get("description")
+    service_version = ServiceVersion.query.filter_by(version=version).first()
+    if service_version:
+        flash(u'版本号已存在', 'danger')
+        return redirect(request.referrer)
+    if version and description:
+        service_version = ServiceVersion(version, description)
+        service_version = service_version.save()
         service = Service.query.filter_by(id=service_id).first_or_404()
-        upload_machine_options(service, option)
+        service.version_id = service_version.id
+        service.status = 4
+        service = service.save()
+        ssh_machine_shell(service.ip, option='restart')
         flash(u'版本上传中，请稍后', 'success')
         return redirect(request.referrer)
     return redirect(request.referrer)
@@ -103,58 +115,40 @@ def echolog():
 @login_required
 @csrf.exempt
 def renew_services():
-    version = request.form.get('version')
+    version = request.form.get('version', type=int)
     option = request.form.get('option')
     ids = request.form.getlist('service_id', type=int)
     for service_id in ids:
-        service = Service.query.filter_by(id=service_id)
+        service = Service.query.filter_by(id=service_id).first()
+        service.status = 2
+        service.version_id = version
+        service = service.save()
         if option == 'now':
             ssh_machine_shell(service.ip, option='restart')
-
-    for id in ids:
-        service = Service.query.filter_by(id=id).first()
-        if service.status == 1:
-            pass
-        elif service.status == 0:
-            pass
-    flash(u'已开始', 'success')
+    flash(u'机器正在重装中，请注意日志', 'success')
     return redirect(request.referrer)
 
 
-@service.route("/get_service_status")
+@service.route("/get_service_status/")
 def get_service_status():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
     if not service:
         return json_response(1, error_msg='error')
-    if service.status in [0, 1]:
-        filename = ''
-        configs = ''
+    filename = 'aoe_a.ipxe'
+    if service.status == 2:
+        configs = "#!ipxe\nset keep-san 1\nchain http://172.20.0.51/winpe/winpe/wimboot_a.ipxe"
+        service.status = 3
+        service.save()
     else:
-        if service.status == 5:
-            filename = ''
-            configs = ''
-        else:
-            filename = ''
-            configs = ''
+        configs = '#!ipxe\nsanboot --no-describe --drive 0x80'
     return response_file(data=configs, filename=filename)
 
 
 @service.route("/service_config_file/")
 def service_config_file():
     request_ip = request.remote_addr
-    print request_ip
     service = Service.query.filter_by(ip=request_ip).first()
-    # if not service:
-    #     return json_response(1, error_msg='error')
-    # if service.status in [0, 1]:
-    filename = 'aoe_b.ipxe'
-    configs = '#!ipxe\nsanboot --no-describe --drive 0x80'
-    # else:
-    #     if service.status == 5:
-    # filename = 'aoe_a.ipxe'
-    # configs = "#!ipxe\nset keep-san 1\nchain http://172.20.0.51/winpe/winpe/wimboot_a.ipxe"
-    #     else:
-    #         filename = ''
-    #         configs = ''
+    filename = 'install.bat'
+    configs = 'set dt=rendergmaster-v{version}\r\ndiskpart -s v:\\diskpart.script\nxcopy v:\\\%dt% c:\\\ /E /F /Y\r\nrobocopy v:\\%dt% C:\\ /E /ETA\r\necho %date%-%time% > c:\\install_time.txt\r\nwpeutil.exe reboot'.format(version=service.version)
     return response_file(data=configs, filename=filename)

@@ -13,7 +13,7 @@ class Service(db.Model):
     ipmi_ip_mac = db.Column(db.String(30))
     date_joined = db.Column(db.DateTime, default=datetime.now())
     last_update = db.Column(db.DateTime, default=datetime.now())
-    status = db.Column(db.Integer, default=0, nullable=True)
+    status = db.Column(db.Integer, default=0, nullable=True)  # 0关机  1开机  2需要引导安装 3重装中  4  上传版本中
     version_id = db.Column(db.ForeignKey('service_version.id'), nullable=True)
     update_ip = db.Column(db.String(15))
 
@@ -30,6 +30,11 @@ class Service(db.Model):
             ipmips.append(i.zfill(3))
         self.ipmi_ip = '.'.join(ipmips)
 
+    def set_version(self, version_num):
+        version = ServiceVersion.query.filter_by(version=version_num).first()
+        if version:
+            self.version_id = version.id
+
     def get_ipmiip(self):
         ipmi_ips = [str(int(s)) for s in self.ipmi_ip.split('.')]
         return '.'.join(ipmi_ips)
@@ -37,8 +42,16 @@ class Service(db.Model):
     @property
     def version(self):
         if self.version_id:
-            service = ServiceVersion.query.filter_by(id=self.version_id).first()
-            return service.version
+            version = ServiceVersion.query.filter_by(id=self.version_id).first()
+            return version.version
+        else:
+            return None
+
+    @property
+    def version_description(self):
+        if self.version_id:
+            version = ServiceVersion.query.filter_by(id=self.version_id).first()
+            return version.description
         else:
             return None
 
@@ -54,6 +67,7 @@ class Service(db.Model):
     def save(self):
         db.session.add(self)
         db.session.commit()
+        return self
 
 
 class MachineRecord(db.Model):
@@ -77,10 +91,12 @@ class ServiceVersion(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     version = db.Column(db.String(30), nullable=False)
+    description = db.Column(db.Text(), nullable=False)
     create_time = db.Column(db.DateTime(), default=datetime.now())
 
-    def __init__(self, version):
+    def __init__(self, version, description):
         self.version = version
+        self.description = description
         self.create_time = datetime.now()
 
     def save(self):

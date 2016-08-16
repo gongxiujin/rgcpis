@@ -130,5 +130,5 @@ def renew_machine_options(service_ids):
     for service_id in service_ids:
         pass
 
-def upload_machine_options(service, option):
+def upload_machine_options(service, version):
     pass
