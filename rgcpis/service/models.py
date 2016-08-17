@@ -76,10 +76,12 @@ class MachineRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ip = db.Column(db.String(15), nullable=False)
     result = db.Column(db.Text(), nullable=False)
+    create_time = db.Column(db.DateTime(), default=datetime.now())
 
     def __init__(self, ip, result):
         self.ip = ip
         self.result = result
+        self.create_time = datetime.now()
 
     def save(self):
         db.session.add(self)
