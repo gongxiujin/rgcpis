@@ -18,7 +18,10 @@ class DefaultConfig(object):
     SQLALCHEMY_ECHO = False
 
     WTF_CSRF_SECRET_KEY = 'donottellyou'
-
+    DHCP_NETWORK_START = '#!ipxe\nset keep-san 1\nchain http://172.20.0.51/winpe/winpe/wimboot.ipxe'
+    BOOT_START = '#!ipxe\nsanboot --no-describe --drive 0x80'
+    RENEW_SERVICE = 'set dt=rendergmaster-v{version}\r\ndiskpart -s v:\\\diskpart.script\r\nxcopy v:\\\\%dt% c:\\\ /E /F /Y\r\nrobocopy v:\\\%dt% C:\\\ /E /ETA\r\necho %date%-%time% > c:\\\install_time.txt\r\nwpeutil.exe reboot'
+    UPLOAD_SERVICE = 'set dt=rendergmaster-v{version}\r\nmkdir %dt%\r\ndel /f /s /q C:\\\pagefile.sys\r\nrobocopy C:\\\ v:\\updata\%dt% /E /ETA\r\necho %date%-%time% > v:\\\updata\%dt%\bak_time.txt\r\nwpeutil.exe reboot'
     SEND_LOGS = False
 
     LOGIN_VIEW = "auth.login"

@@ -84,7 +84,7 @@ def service_upload(service_id):
         service.version_id = service_version.id
         service.status = 4
         service = service.save()
-        ssh_machine_shell(service.ip, option='restart')
+        ssh_machine_shell(service.ip, option='reset')
         flash(u'版本上传中，请稍后', 'success')
         return redirect(request.referrer)
     return redirect(request.referrer)
@@ -112,7 +112,7 @@ def renew_services():
             service = service.save()
             if option == 'now':
                 flash(u'机器正在重装中，请注意日志', 'success')
-                ssh_machine_shell(service.ip, option='restart')
+                ssh_machine_shell(service.ip, option='reset')
             else:
                 flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
         return redirect(request.referrer)
@@ -122,19 +122,19 @@ def renew_services():
         return redirect(request.referrer)
 
 
-@service.route("/check_start_status/aoe_a.ipxe")
+@service.route("/check_start_status/aoe.ipxe")
 def get_service_status():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
     if not service:
         return json_response(1, error_msg='error')
-    filename = 'aoe_a.ipxe'
+    filename = 'aoe.ipxe'
     if service.status in [2, 4]:
         record = MachineRecord(service.ip, u'机器引导中')
         record.save()
-        configs = "#!ipxe\nset keep-san 1\nchain http://172.20.0.51/winpe/winpe/wimboot_a.ipxe"
+        configs = current_app.config['DHCP_NETWORK_START']
     else:
-        configs = '#!ipxe\nsanboot --no-describe --drive 0x80'
+        configs = current_app.config['BOOT_START']
         service.status = 1
         service.save()
     return response_file(data=configs, filename=filename)
@@ -154,15 +154,13 @@ def service_config_file():
         service.save()
         record = MachineRecord(service.ip, u'开始重装系统')
         record.save()
-        configs = 'set dt=rendergmaster-v{version}\r\ndiskpart -s v:\\\diskpart.script\r\nxcopy v:\\\\%dt% c:\\\ /E /F /Y\r\nrobocopy v:\\\%dt% C:\\\ /E /ETA\r\necho %date%-%time% > c:\\\install_time.txt\r\nwpeutil.exe reboot'.format(
-            version=service.version)
+        configs = current_app.config['RENEW_SERVICE'].format(version=service.version)
     elif service.status in [4, 5]:
         service.status = 5
         service.save()
         record = MachineRecord(service.ip, u'开始备份系统')
         record.save()
-        configs = 'set dt=rendergmaster-v{version}\r\nmkdir %dt%\r\ndel /f /s /q C:\\\pagefile.sys\r\nrobocopy C:\\\ v:\\updata\%dt% /E /ETA\r\necho %date%-%time% > v:\\\updata\%dt%\bak_time.txt\r\nwpeutil.exe reboot'.format(
-            version=service.version)
+        configs = current_app.config['UPLOAD_SERVICE'].format(version=service.version)
     return response_file(data=configs, filename=filename)
 
 

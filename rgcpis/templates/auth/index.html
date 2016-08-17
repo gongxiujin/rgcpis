@@ -91,9 +91,9 @@
                     <select name="option" id="">
                         <option value="on">开机</option>
                         <option value="off">关机</option>
-                        <option value="restart">重启</option>
+                        <option value="reset">重启</option>
                     </select>
-                <button type="submit" class="btn btn-primary" id="submit">提交</button>
+                <button type="submit" class=:"btn btn-primary" id="submit">提交</button>
                 </form>
 {#                <button class="btn btn-danger"  name="operation" value="hidden" style="margin: 10px 0 10px 0">重装机器</button>#}
                 </div>
@@ -116,9 +116,9 @@
                         <td><p title="{{ service.version_description }}">{{ service.version }}</p></td>
                         <td>
                             {% if service|check_service() %}
-                            <a href="{{ url_for("service.single_service_option", options="restart", service_id=service.id) }}" onclick="return confirm('请确认是否要重启');"><span class="glyphicon glyphicon-repeat" aria-hidden="true" title="重启"></span></a>
+                            <a href="{{ url_for("service.single_service_option", options="reset", service_id=service.id) }}" onclick="return confirm('请确认是否要重启');"><span class="glyphicon glyphicon-repeat" aria-hidden="true" title="重启"></span></a>
                             {% if service.status == 1 %}
-                            <a href="{{ url_for("service.single_service_option", options="shutdown", service_id=service.id) }}" onclick="return confirm('请确认是否要关机');"><span class="glyphicon glyphicon-off" aria-hidden="true" title="关机"></span></a>
+                            <a href="{{ url_for("service.single_service_option", options="off", service_id=service.id) }}" onclick="return confirm('请确认是否要关机');"><span class="glyphicon glyphicon-off" aria-hidden="true" title="关机"></span></a>
                             {% else %}
                             {% if service.status == 0 %}
                                 <a href="{{ url_for("service.single_service_option", options="start", service_id=service.id) }}" onclick="return confirm('请确认是否要开机');"><span class="glyphicon glyphicon-play" aria-hidden="true" title="开机"></span></a>
