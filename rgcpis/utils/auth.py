@@ -35,10 +35,10 @@ def response_file(data, filename):
     from ctypes import create_string_buffer
     import mimetypes, struct
     from werkzeug.datastructures import Headers
-    buf = create_string_buffer(len(data))
-    struct.pack_into(str(len(data))+"s", buf, 0, data)
+    # buf = create_string_buffer(len(data))
+    # struct.pack_into(str(len(data))+"s", buf, 0, data)
     response = Response()
-    response.data = buf.raw
+    response.data = data
     response.status_code = 200
     mimetype_tuple = mimetypes.guess_type(filename)
     response.default_mimetype=mimetype_tuple[0]

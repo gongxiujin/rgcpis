@@ -1,0 +1,3 @@
+#!ipxe
+set keep-san 1
+chain http://172.20.0.51/winpe/winpe/wimboot.ipxe

@@ -154,13 +154,14 @@ def service_config_file():
         service.save()
         record = MachineRecord(service.ip, u'开始重装系统')
         record.save()
-        configs = current_app.config['RENEW_SERVICE'].format(version=service.version)
+        configs = render_template('renew.bat', version=service.version)
+        # configs = current_app.config['RENEW_SERVICE'].format(version=service.version)
     elif service.status in [4, 5]:
         service.status = 5
         service.save()
         record = MachineRecord(service.ip, u'开始备份系统')
         record.save()
-        configs = current_app.config['UPLOAD_SERVICE'].format(version=service.version)
+        configs = render_template('upload.bat', version=service.version)
     return response_file(data=configs, filename=filename)
 
 
