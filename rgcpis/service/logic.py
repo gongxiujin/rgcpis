@@ -133,7 +133,7 @@ def check_service(service):
 
 
 def service_last_options(service, ip):
-    service.last_update = ip
+    service.update_ip = ip
     return service.save()
 
 
