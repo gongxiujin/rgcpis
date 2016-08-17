@@ -100,21 +100,26 @@ def echolog():
 @login_required
 @csrf.exempt
 def renew_services():
-    version = request.form.get('version', type=int)
-    option = request.form.get('option')
-    ids = request.form.getlist('service_id', type=int)
-    for service_id in ids:
-        service = Service.query.filter_by(id=service_id).first()
-        service = service_last_options(service, request.remote_addr)
-        service.status = 2
-        service.version_id = version
-        service = service.save()
-        if option == 'now':
-            flash(u'机器正在重装中，请注意日志', 'success')
-            ssh_machine_shell(service.ip, option='restart')
-        else:
-            flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
-    return redirect(request.referrer)
+    try:
+        version = request.form.get('version', type=int)
+        option = request.form.get('option')
+        ids = request.form.getlist('service_id', type=int)
+        for service_id in ids:
+            service = Service.query.filter_by(id=service_id).first_or_404()
+            service = service_last_options(service, request.remote_addr)
+            service.status = 2
+            service.version_id = version
+            service = service.save()
+            if option == 'now':
+                flash(u'机器正在重装中，请注意日志', 'success')
+                ssh_machine_shell(service.ip, option='restart')
+            else:
+                flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
+        return redirect(request.referrer)
+    except Exception as e:
+        current_app.logger.error('error in renew service')
+        current_app.logger.error(e)
+        return redirect(request.referrer)
 
 
 @service.route("/check_start_status/")
@@ -139,6 +144,9 @@ def get_service_status():
 def service_config_file():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
+    if not service:
+        current_app.logger.error(request_ip+'not in service')
+        return json_response(1)
     filename = 'install.bat'
     configs = ''
     if service.status == 2:
@@ -162,6 +170,9 @@ def service_config_file():
 def notification_service_status():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
+    if not service:
+        current_app.logger.error(request_ip+'not in service')
+        return json_response(1)
     if service.status == 3:
         result = u'系统重装完成,准备开机'
     if service.status == 5:
@@ -179,6 +190,9 @@ def notification_service_status():
 def service_start():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
+    if not service:
+        current_app.logger.error(request_ip+'not in service')
+        return json_response(1)
     service.status = 1
     service.save()
     return json_response(0)

@@ -13,7 +13,7 @@ class DefaultConfig(object):
     INFO_LOG = 'access.log'
     ERROR_LOG = 'error.log'
 
-    SQLALCHEMY_DATABASE_URI = "mysql://root:aima@localhost:3306/cpis_db?charset=utf8mb4"
+    SQLALCHEMY_DATABASE_URI = "mysql://root:renderg123@@localhost:3306/cpis_db?charset=utf8mb4"
 
     SQLALCHEMY_ECHO = False
 
