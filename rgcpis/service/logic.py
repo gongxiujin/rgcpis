@@ -7,7 +7,6 @@ from flask_login import current_app
 from rgcpis.service.models import MachineRecord, Service
 from threading import Thread
 
-
 IPMI_OFFSET = 8
 
 
@@ -126,9 +125,17 @@ def get_service_status(status):
 def order_status(order):
     return int(not order)
 
-def renew_machine_options(service_ids):
-    for service_id in service_ids:
-        pass
+
+def check_service(service):
+    if service.status not in [0, 1]:
+        return False
+    return True
+
+
+def service_last_options(service, ip):
+    service.last_update = ip
+    return service.save()
+
 
 def upload_machine_options(service, version):
     pass

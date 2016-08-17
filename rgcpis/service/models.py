@@ -7,13 +7,13 @@ class Service(db.Model):
     __tablename__ = "service"
 
     id = db.Column(db.Integer, primary_key=True)
-    ip = db.Column(db.String(15), nullable=False)
+    ip = db.Column(db.String(15), nullable=False, index=True)
     ip_mac = db.Column(db.String(30))
     ipmi_ip = db.Column(db.String(15), nullable=False)
     ipmi_ip_mac = db.Column(db.String(30))
     date_joined = db.Column(db.DateTime, default=datetime.now())
     last_update = db.Column(db.DateTime, default=datetime.now())
-    status = db.Column(db.Integer, default=0, nullable=True)  # 0关机  1开机  2需要引导安装 3重装中  4  上传版本中
+    status = db.Column(db.Integer, default=0, nullable=True)  # 0关机  1开机  2重装前引导 3重装中  4备份前引导 5  上传版本中 6 安装完毕重启中
     version_id = db.Column(db.ForeignKey('service_version.id'), nullable=True)
     update_ip = db.Column(db.String(15))
 
@@ -90,7 +90,7 @@ class ServiceVersion(db.Model):
     __tablename__ = "service_version"
 
     id = db.Column(db.Integer, primary_key=True)
-    version = db.Column(db.String(30), nullable=False)
+    version = db.Column(db.String(30), nullable=False, unique=True)
     description = db.Column(db.Text(), nullable=False)
     create_time = db.Column(db.DateTime(), default=datetime.now())
 

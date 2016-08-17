@@ -3,23 +3,15 @@ from flask import Blueprint, render_template, redirect, url_for, flash
 from rgcpis.extensions import csrf
 from flask_login import current_app, login_required, current_user
 from flask_login import request
-from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, renew_machine_options, upload_machine_options
+from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, upload_machine_options, \
+    service_last_options
 from rgcpis.service.models import Service, MachineRecord, ServiceVersion
 from rgcpis.utils.auth import json_response, response_file
 
 service = Blueprint('service', __name__)
 COPAY_PER_PAGE = 20
-
-
-def stream_template(template_name, **context):
-    current_app.update_template_context(context)
-    t = current_app.jinja_env.get_template(template_name)
-    rv = t.stream(context)
-    rv.enable_buffering(5)
-    return rv
-
-
-order_status = {1: 'desc', 0: 'asc'}
+ORDER_STATUS = {1: 'desc', 0: 'asc'}
+VERSION_RE = r'(\d{0,3}\.){1,2}(\d{0,3})'
 
 
 @service.route('/')
@@ -34,9 +26,9 @@ def index():
     versions = ServiceVersion.query.all()
     order_by = []
     if status is not None:
-        order_by.append('status ' + order_status[status])
+        order_by.append('status ' + ORDER_STATUS[status])
     if ip is not None:
-        order_by.append('ipmi_ip ' + order_status[ip])
+        order_by.append('ipmi_ip ' + ORDER_STATUS[ip])
     services = Service.query.order_by(*order_by).paginate(page, COPAY_PER_PAGE, False)
     return render_template('auth/index.html', services=services, status=status, ip=ip, versions=versions)
 
@@ -72,14 +64,6 @@ def single_service_option(options, service_id):
     return redirect(request.referrer)
 
 
-# @service.route('/service_options/<int:service_id>', methods=["GET", "POST"])
-# def renew_service(service_id):
-#     service = Service.query.filter_by(id=service_id).first()
-#     renew_machine_options(service.ip)
-#     flash(u'机器正在重装中，请注意日志', 'success')
-#     return redirect(request.referrer)
-VERSION_RE = r'(\d{0,3}\.){1,2}(\d{0,3})'
-
 @service.route('/service_upload/<int:service_id>', methods=["POST"])
 def service_upload(service_id):
     import re
@@ -96,6 +80,7 @@ def service_upload(service_id):
         service_version = ServiceVersion(version, description)
         service_version = service_version.save()
         service = Service.query.filter_by(id=service_id).first_or_404()
+        service = service_last_options(service, request.remote_addr)
         service.version_id = service_version.id
         service.status = 4
         service = service.save()
@@ -120,28 +105,33 @@ def renew_services():
     ids = request.form.getlist('service_id', type=int)
     for service_id in ids:
         service = Service.query.filter_by(id=service_id).first()
+        service = service_last_options(service, request.remote_addr)
         service.status = 2
         service.version_id = version
         service = service.save()
         if option == 'now':
+            flash(u'机器正在重装中，请注意日志', 'success')
             ssh_machine_shell(service.ip, option='restart')
-    flash(u'机器正在重装中，请注意日志', 'success')
+        else:
+            flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
     return redirect(request.referrer)
 
 
-@service.route("/get_service_status/")
+@service.route("/check_start_status/")
 def get_service_status():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
     if not service:
         return json_response(1, error_msg='error')
     filename = 'aoe_a.ipxe'
-    if service.status == 2:
+    if service.status in [2, 4]:
+        record = MachineRecord(service.ip, u'机器引导中')
+        record.save()
         configs = "#!ipxe\nset keep-san 1\nchain http://172.20.0.51/winpe/winpe/wimboot_a.ipxe"
-        service.status = 3
-        service.save()
     else:
         configs = '#!ipxe\nsanboot --no-describe --drive 0x80'
+        service.status = 1
+        service.save()
     return response_file(data=configs, filename=filename)
 
 
@@ -150,5 +140,45 @@ def service_config_file():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
     filename = 'install.bat'
-    configs = 'set dt=rendergmaster-v{version}\r\ndiskpart -s v:\\diskpart.script\nxcopy v:\\\%dt% c:\\\ /E /F /Y\r\nrobocopy v:\\%dt% C:\\ /E /ETA\r\necho %date%-%time% > c:\\install_time.txt\r\nwpeutil.exe reboot'.format(version=service.version)
+    configs = ''
+    if service.status == 2:
+        service.status = 3
+        service.save()
+        record = MachineRecord(service.ip, u'开始重装系统')
+        record.save()
+        configs = 'set dt=rendergmaster-v{version}\r\ndiskpart -s v:\\\diskpart.script\r\nxcopy v:\\\\%dt% c:\\\ /E /F /Y\r\nrobocopy v:\\\%dt% C:\\\ /E /ETA\r\necho %date%-%time% > c:\\\install_time.txt\r\nwpeutil.exe reboot'.format(
+            version=service.version)
+    elif service.status == 4:
+        service.status = 5
+        service.save()
+        record = MachineRecord(service.ip, u'开始备份系统')
+        record.save()
+        configs = 'set dt=rendergmaster-v{version}\r\nmkdir %dt%\r\ndel /f /s /q C:\\\pagefile.sys\r\nrobocopy C:\\\ v:\\updata\%dt% /E /ETA\r\necho %date%-%time% > v:\\\updata\%dt%\bak_time.txt\r\nwpeutil.exe reboot'.format(
+            version=service.version)
     return response_file(data=configs, filename=filename)
+
+
+@service.route("/notification_service_status/")
+def notification_service_status():
+    request_ip = request.remote_addr
+    service = Service.query.filter_by(ip=request_ip).first()
+    if service.status == 3:
+        result = u'系统重装完成,准备开机'
+    if service.status == 5:
+        result = u'系统备份完成,准备开机'
+    else:
+        result = u'操作完成,准备开机'
+    record = MachineRecord(service.ip, result)
+    record.save()
+    service.status = 6
+    service.save()
+    return json_response(0)
+
+
+@service.route("/service_start/")
+def service_start():
+    request_ip = request.remote_addr
+    service = Service.query.filter_by(ip=request_ip).first()
+    service.status = 1
+    service.save()
+    return json_response(0)

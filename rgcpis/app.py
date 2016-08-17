@@ -3,7 +3,7 @@ from rgcpis.user.views import users
 from rgcpis.extensions import db, migrate, login_manager, csrf
 from flask import Flask
 from flask import redirect, url_for
-from rgcpis.service.logic import get_service_status, order_status
+from rgcpis.service.logic import get_service_status, order_status, check_service
 from rgcpis.service.views import service
 import logging
 import os, time
@@ -57,6 +57,7 @@ def register_buleprint(app):
 def configure_template_filters(app):
     app.jinja_env.filters['service_status'] = get_service_status
     app.jinja_env.filters['order_status'] = order_status
+    app.jinja_env.filters['check_service'] = check_service
 
 
 def configure_logging(app):

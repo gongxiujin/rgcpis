@@ -110,12 +110,12 @@
                     <tbody>
                     {% for service in services.items %}
                     <tr>
-                        <td><input type="checkbox" name="service_id" value="{{ service.id }}"></td>
+                        <td>{% if service|check_service() %}<input type="checkbox" name="service_id" value="{{ service.id }}">{% endif %}</td>
                         <td>{{ service.ip }}</td>
                         <td>{{ service.status|service_status() }}</td>
                         <td><p title="{{ service.version_description }}">{{ service.version }}</p></td>
                         <td>
-{#                            {% if service in [0, 1] %}#}
+                            {% if service|check_service() %}
                             <a href="{{ url_for("service.single_service_option", options="restart", service_id=service.id) }}" onclick="return confirm('请确认是否要重启');"><span class="glyphicon glyphicon-repeat" aria-hidden="true" title="重启"></span></a>
                             {% if service.status == 1 %}
                             <a href="{{ url_for("service.single_service_option", options="shutdown", service_id=service.id) }}" onclick="return confirm('请确认是否要关机');"><span class="glyphicon glyphicon-off" aria-hidden="true" title="关机"></span></a>
@@ -125,7 +125,7 @@
                             {% endif %}
                             {% endif %}
                             <a href="#" data-toggle="modal" data-target="#myModal" data-whatever="{{ service.id }}"><span class="glyphicon glyphicon-cloud-upload" aria-hidden="true" title="备份并上传版本"></span></a>
-{#                            {% endif %}#}
+                            {% endif %}
 {#                        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal"></button>#}
                         </td>
                     </tr>
