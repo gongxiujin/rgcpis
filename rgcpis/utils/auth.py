@@ -32,14 +32,18 @@ def response_file(data, filename):
     :return: return a file to client
     """
     from flask import Response
-    import mimetypes
+    from ctypes import create_string_buffer
+    import mimetypes, struct
     from werkzeug.datastructures import Headers
+    buf = create_string_buffer(len(data))
+    struct.pack_into(str(len(data))+"s", buf, 0, data)
     response = Response()
-    response.data = data
+    response.data = buf.raw
     response.status_code = 200
     mimetype_tuple = mimetypes.guess_type(filename)
+    response.default_mimetype=mimetype_tuple[0]
     response_headers = Headers({
-        'Pragma': "public",
+        'Pragma': "no-cache",
         'Expires': '0',
         'Cache-Control': 'must-revalidate, post-check=0, pre-check=0',
         'Content-Type': mimetype_tuple[0],
@@ -48,7 +52,7 @@ def response_file(data, filename):
         'Content-Length': len(response.data)
     })
     if not mimetype_tuple[1] is None:
-        response.update({
+        response.headers.update({
             'Content-Encoding': mimetype_tuple[1]
         })
 

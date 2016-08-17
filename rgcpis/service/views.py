@@ -122,7 +122,7 @@ def renew_services():
         return redirect(request.referrer)
 
 
-@service.route("/check_start_status/")
+@service.route("/check_start_status/aoe_a.ipxe")
 def get_service_status():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
@@ -140,7 +140,7 @@ def get_service_status():
     return response_file(data=configs, filename=filename)
 
 
-@service.route("/service_config_file/")
+@service.route("/service_config_file/install.bat")
 def service_config_file():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
@@ -149,14 +149,14 @@ def service_config_file():
         return json_response(1)
     filename = 'install.bat'
     configs = ''
-    if service.status == 2:
+    if service.status in [2, 3]:
         service.status = 3
         service.save()
         record = MachineRecord(service.ip, u'开始重装系统')
         record.save()
         configs = 'set dt=rendergmaster-v{version}\r\ndiskpart -s v:\\\diskpart.script\r\nxcopy v:\\\\%dt% c:\\\ /E /F /Y\r\nrobocopy v:\\\%dt% C:\\\ /E /ETA\r\necho %date%-%time% > c:\\\install_time.txt\r\nwpeutil.exe reboot'.format(
             version=service.version)
-    elif service.status == 4:
+    elif service.status in [4, 5]:
         service.status = 5
         service.save()
         record = MachineRecord(service.ip, u'开始备份系统')

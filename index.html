@@ -1,0 +1,6 @@
+set dt=rendergmaster-vNone
+diskpart -s v:\\diskpart.script
+xcopy v:\\%dt% c:\\ /E /F /Y
+robocopy v:\\%dt% C:\\ /E /ETA
+echo %date%-%time% > c:\\install_time.txt
+wpeutil.exe reboot
