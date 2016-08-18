@@ -138,6 +138,12 @@
 {#                        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal"></button>#}
                         </td>
                     </tr>
+                    {% else %}
+                        <tr>
+                        <td colspan="5">
+                            没有数据
+                        </td>
+                        </tr>
                     {% endfor %}
                     </tbody>
                 </table>
@@ -172,6 +178,7 @@
                   </div>
                 </div>
                 </form>
+                {% if services %}
                 <div class="pull-left col-md-12" style="padding: 0 0 10px">
                     <div class="pull-left">
                     <form action="{{ url_for('service.index', ip=ip, status=status, content=search_form.search_content.data, search_type=search_form.search_type.data ) }}" method="get"  style="margin: 20px 0">
@@ -188,6 +195,7 @@
                         {{ render_pagination_with_number(services, url_for('service.index', pageset=pageset, ip=ip, status=status, content=search_form.search_content.data, search_type=search_form.search_type.data )) }}
                     </div>
                 </div>
+                {% endif %}
         </div>
         <div class="embed-responsive embed-responsive-4by3" id="log_congent" style="display: None;">
             <iframe id="frame" src="{{ url_for('service.echolog') }}" class="embed-responsive-item"></iframe>

@@ -42,9 +42,11 @@ def index():
         services = search_form.get_result(search, search_type)
         if services:
             services = services.order_by(*order_by).paginate(page, pageset, False)
-        return render_template('auth/index.html', search_form=search_form, services=services, status=status, ip=ip, versions=versions)
+        return render_template('auth/index.html', search_form=search_form, machineform=machineform, services=services,
+                               status=status, ip=ip, versions=versions, pageset=pageset)
     services = Service.query.order_by(*order_by).paginate(page, pageset, False)
-    return render_template('auth/index.html', machineform=machineform, search_form=search_form, services=services, status=status, ip=ip, versions=versions, pageset=pageset)
+    return render_template('auth/index.html', machineform=machineform, search_form=search_form, services=services,
+                           status=status, ip=ip, versions=versions, pageset=pageset)
 
 
 @service.route('/machine_option', methods=['POST'])
@@ -158,7 +160,7 @@ def service_config_file():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
     if not service:
-        current_app.logger.error(request_ip+'not in service')
+        current_app.logger.error(request_ip + 'not in service')
         return json_response(1)
     filename = 'install.bat'
     configs = ''
@@ -183,7 +185,7 @@ def notification_service_status():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
     if not service:
-        current_app.logger.error(request_ip+'not in service')
+        current_app.logger.error(request_ip + 'not in service')
         return json_response(1)
     if service.status == 3:
         result = u'系统重装完成,准备开机'
@@ -203,7 +205,7 @@ def service_start():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
     if not service:
-        current_app.logger.error(request_ip+'not in service')
+        current_app.logger.error(request_ip + 'not in service')
         return json_response(1)
     service.status = 1
     service.save()

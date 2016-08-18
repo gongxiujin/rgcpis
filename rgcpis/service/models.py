@@ -104,7 +104,7 @@ class ServiceVersion(db.Model):
     @classmethod
     def get_version_id(cls, version):
         versions = cls.query.filter_by(version=version).first()
-        return versions.id
+        return versions.id if versions else None
 
     def save(self):
         db.session.add(self)
