@@ -30,9 +30,17 @@ def thread_ssh(formt_ipmiip, option):
     from manage import app
     with app.app_context():
         for ip_dict in formt_ipmiip:
+            if option != 'off':
+                ipmi_guide = "ipmitool  -H {IPA} -U USERID -P PASSW0RD -I lanplus chassis bootdev pxe".format(
+                    IPA=ip_dict['ipmi_ip'])
+                guide = pexpect.spawn(ipmi_guide)
+                while guide.isalive():
+                    time.sleep(1)
+                result_guide = guide.read()
+                guide_record = MachineRecord(ip_dict['real_ip'], result_guide)
+                guide_record.save()
             ssh_add = 'ipmitool -H {IPA} -U USERID -P PASSW0RD -I lanplus chassis power {option}'.format(
                 IPA=ip_dict['ipmi_ip'], option=option)
-
             chile = pexpect.spawn(ssh_add)
             while chile.isalive():
                 time.sleep(1)

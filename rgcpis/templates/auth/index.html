@@ -11,8 +11,6 @@
             text-align: right;
         }
     </style>
-{#    <link rel="stylesheet" href="../css/bootstrap.min.css">#}
-{#    <link rel="stylesheet" href="../css/font-awesome.min.css">#}
 </head>
 <body>
 {% from 'macros.html' import horizontal_field, inline_field, render_pagination_with_number with context %}
@@ -98,7 +96,7 @@
 {#                <button class="btn btn-danger"  name="operation" value="hidden" style="margin: 10px 0 10px 0">重装机器</button>#}
                 </div>
                 <form action="{{ url_for('service.renew_services') }}" class="form-inline" method="post">
-                <a href="#" data-toggle="modal" class="btn btn-danger" data-target="#reloadmodal" title="重装机器" >重装机器</a>
+                <a href="#" data-toggle="modal" class="btn btn-danger" data-target="#reloadmodal" title="重装机器" onclick="return confirm('请确认是否要重装机器');">重装机器</a>
                 <table class="table table-striped table-bordered table-hover model-list col-md-12">
                     <thead>
                     <th class="col-md-1"><input type="checkbox" onClick="toggle(this)"/>全选</th>
@@ -233,12 +231,6 @@
             var modal = $(this);
             modal.find('form').attr('action','/service/service_upload/'+recipient);
         });
-{#        $('#reloadmodal').on('show.bs.modal', function (event) {#}
-{#            var button = $(event.relatedTarget);#}
-{#            var recipient = button.data('whatever');#}
-{#            var modal = $(this);#}
-{#            modal.find('form').attr('action','/service/service_upload/'+recipient);#}
-{#        });#}
     });
 </script>
 </body>
