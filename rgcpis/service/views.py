@@ -20,7 +20,7 @@ VERSION_RE = r'(\d{0,3}\.){1,2}(\d{0,3})'
 def index():
     if current_user is None and not current_user.is_authenticated:
         return redirect(url_for("users.login"))
-    requests = request
+
     page = request.args.get('page', 1, type=int)
     pageset = request.args.get('pageset', 25, type=int)
     status = request.args.get('status', type=int)
@@ -50,6 +50,7 @@ def index():
 
 
 @service.route('/machine_option', methods=['POST'])
+@login_required
 def machine_option():
     if request.method == 'POST':
         machineform = AddMachineForm()
@@ -65,9 +66,10 @@ def machine_option():
 
 
 @service.route('/single_service_option/<string:options>/<int:service_id>')
+@login_required
 def single_service_option(options, service_id):
     service = Service.query.filter_by(id=service_id).first()
-    if service.status == 0 and options == "off":
+    if service.status == 0 and options == "soft":
         flash(u"机器已经关机", "danger")
     if service.status == 2 and options == "reset":
         flash(u"已经在重启中", "danger")
@@ -80,6 +82,7 @@ def single_service_option(options, service_id):
 
 
 @service.route('/service_upload/<int:service_id>', methods=["POST"])
+@login_required
 def service_upload(service_id):
     import re
     version = request.form.get("new_version")

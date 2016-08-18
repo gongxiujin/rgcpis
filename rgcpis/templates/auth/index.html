@@ -83,21 +83,6 @@
                     {{ group_field(machineform.endip) }}
                     {{ group_field(machineform.option) }}
                     {{ group_field(machineform.submit, class='btn btn-primary') }}
-
-{#                <div class="form-group">#}
-{#                <label for="ipstart">IP地址范围</label>#}
-{#                <input type="text" class="form-control" name="ipstart" id="ipstart" placeholder="开始ip段地址">#}
-{#                </div>#}
-{#                <div class="form-group">#}
-{#                <label for="ipend"></label>#}
-{#                <input type="text" id="ipend" name="ipend" class="form-control"  placeholder="结束ip段地址">#}
-{#                </div>#}
-{#                    <select name="option" id="">#}
-{#                        <option value="on">开机</option>#}
-{#                        <option value="soft">关机</option>#}
-{#                        <option value="reset">重启</option>#}
-{#                    </select>#}
-{#                <button type="submit" class="btn btn-primary" id="submit" onclick="return confirm('请确认是否要对该机器执行操作');">提交</button>#}
                 </form>
                 </div>
                 <form role="form" method="post" class="pull-left col-md-12 form-inline" action="{{ url_for('service.index', pageset=pageset, page=page, status=status, ip=ip) }}">
@@ -127,7 +112,7 @@
                             {% if service|check_service() %}
                             <a href="{{ url_for("service.single_service_option", options="reset", service_id=service.id) }}" onclick="return confirm('请确认是否要重启');"><span class="glyphicon glyphicon-repeat" aria-hidden="true" title="重启"></span></a>
                             {% if service.status == 1 %}
-                            <a href="{{ url_for("service.single_service_option", options="off", service_id=service.id) }}" onclick="return confirm('请确认是否要关机');"><span class="glyphicon glyphicon-off" aria-hidden="true" title="关机"></span></a>
+                            <a href="{{ url_for("service.single_service_option", options="soft", service_id=service.id) }}" onclick="return confirm('请确认是否要关机');"><span class="glyphicon glyphicon-off" aria-hidden="true" title="关机"></span></a>
                             {% else %}
                             {% if service.status == 0 %}
                                 <a href="{{ url_for("service.single_service_option", options="on", service_id=service.id) }}" onclick="return confirm('请确认是否要开机');"><span class="glyphicon glyphicon-play" aria-hidden="true" title="开机"></span></a>
