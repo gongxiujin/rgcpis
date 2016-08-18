@@ -182,11 +182,19 @@
                 <div class="pull-left col-md-12" style="padding: 0 0 10px">
                     <div class="pull-left">
                     <form action="{{ url_for('service.index') }}" method="get"  style="margin: 20px 0">
+                        {% if ip %}
                         <input type="hidden" name="ip" value="{{ ip }}">
+                        {% endif %}
+                        {% if status %}
                         <input type="hidden" name="status" value="{{ status }}">
-                        <input type="hidden" name="content" value="{{ search_form.search_content.data }}">
+                        {% endif %}
+                        {% if search_form.search_content.data %}
+                            <input type="hidden" name="content" value="{{ search_form.search_content.data }}">
+                        {% endif %}
                         <input type="hidden" name="search_type" value="{{ search_form.search_type.data }}">
+                        {% if page %}
                         <input type="hidden" name="page" value="{{ page }}">
+                        {% endif %}
                         <label>每页显示</label>
                         <select name="pageset" id="pageset">
                             <option value="25">25</option>
