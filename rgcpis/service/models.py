@@ -101,6 +101,11 @@ class ServiceVersion(db.Model):
         self.description = description
         self.create_time = datetime.now()
 
+    @classmethod
+    def get_version_id(cls, version):
+        versions = cls.query.filter_by(version=version).first()
+        return versions.id
+
     def save(self):
         db.session.add(self)
         db.session.commit()

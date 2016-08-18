@@ -61,35 +61,73 @@ def configure_template_filters(app):
 
 
 def configure_logging(app):
+    # logs_folder = os.path.join(app.root_path, os.pardir, "logs")
+    # from logging.handlers import SMTPHandler
+    # formatter = logging.Formatter(
+    #     '%(asctime)s %(levelname)s: %(message)s '
+    #     '[in %(pathname)s:%(lineno)d]')
+    #
+    # info_log = os.path.join(logs_folder, app.config['INFO_LOG'])
+    #
+    # info_file_handler = logging.handlers.RotatingFileHandler(
+    #     info_log,
+    #     maxBytes=100000,
+    #     backupCount=10
+    # )
+    #
+    # info_file_handler.setLevel(logging.INFO)
+    # info_file_handler.setFormatter(formatter)
+    # app.logger.addHandler(info_file_handler)
+    #
+    # error_log = os.path.join(logs_folder, app.config['ERROR_LOG'])
+    #
+    # error_file_handler = logging.handlers.RotatingFileHandler(
+    #     error_log,
+    #     maxBytes=100000,
+    #     backupCount=10
+    # )
+    #
+    # error_file_handler.setLevel(logging.ERROR)
+    # error_file_handler.setFormatter(formatter)
+    # app.logger.addHandler(error_file_handler)
+    #
+    # app.logger.info('start')
+    # app.logger.error('start')
     logs_folder = os.path.join(app.root_path, os.pardir, "logs")
     from logging.handlers import SMTPHandler
+
+    pid_string = str(os.getpid())
+
     formatter = logging.Formatter(
         '%(asctime)s %(levelname)s: %(message)s '
         '[in %(pathname)s:%(lineno)d]')
 
-    info_log = os.path.join(logs_folder, app.config['INFO_LOG'])
+    info_log = os.path.join(logs_folder, app.config['INFO_LOG'] + '.' + pid_string)
 
-    info_file_handler = logging.handlers.RotatingFileHandler(
-        info_log,
-        maxBytes=100000,
-        backupCount=10
-    )
+    info_file_handler = logging.handlers.TimedRotatingFileHandler(info_log)
 
     info_file_handler.setLevel(logging.INFO)
     info_file_handler.setFormatter(formatter)
     app.logger.addHandler(info_file_handler)
 
-    error_log = os.path.join(logs_folder, app.config['ERROR_LOG'])
+    error_log = os.path.join(logs_folder, app.config['ERROR_LOG'] + '.' + pid_string)
 
-    error_file_handler = logging.handlers.RotatingFileHandler(
-        error_log,
-        maxBytes=100000,
-        backupCount=10
-    )
+    error_file_handler = logging.handlers.TimedRotatingFileHandler(error_log)
 
     error_file_handler.setLevel(logging.ERROR)
     error_file_handler.setFormatter(formatter)
     app.logger.addHandler(error_file_handler)
+    if app.config["SQLALCHEMY_ECHO"]:
+        # Ref: http://stackoverflow.com/a/8428546
+        @event.listens_for(Engine, "before_cursor_execute")
+        def before_cursor_execute(conn, cursor, statement,
+                                  parameters, context, executemany):
+            context._query_start_time = time.time()
 
-    app.logger.info('start')
-    app.logger.error('start')
+        @event.listens_for(Engine, "after_cursor_execute")
+        def after_cursor_execute(conn, cursor, statement,
+                                 parameters, context, executemany):
+            total = time.time() - context._query_start_time
+
+            # Modification for StackOverflow: times in milliseconds
+            app.logger.debug("Total Time: %.02fms" % (total * 1000))

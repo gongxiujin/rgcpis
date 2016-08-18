@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash
 from rgcpis.extensions import csrf
 from flask_login import current_app, login_required, current_user
 from flask_login import request
+from rgcpis.service.forms import SearchServiceForm, AddMachineForm
 from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, upload_machine_options, \
     service_last_options
 from rgcpis.service.models import Service, MachineRecord, ServiceVersion
@@ -14,53 +15,65 @@ ORDER_STATUS = {1: 'desc', 0: 'asc'}
 VERSION_RE = r'(\d{0,3}\.){1,2}(\d{0,3})'
 
 
-@service.route('/')
+@service.route('/', methods=['POST', 'GET'])
 @login_required
 def index():
     if current_user is None and not current_user.is_authenticated:
         return redirect(url_for("users.login"))
 
     page = request.args.get('page', 1, type=int)
+    pageset = request.args.get('pageset', 25, type=int)
     status = request.args.get('status', type=int)
     ip = request.args.get('ip', type=int)
+    search = request.args.get('content')
+    search_type = request.args.get('search_type')
     versions = ServiceVersion.query.all()
+    search_form = SearchServiceForm()
+    machineform = AddMachineForm()
     order_by = []
     if status is not None:
         order_by.append('status ' + ORDER_STATUS[status])
     if ip is not None:
         order_by.append('ipmi_ip ' + ORDER_STATUS[ip])
-    services = Service.query.order_by(*order_by).paginate(page, COPAY_PER_PAGE, False)
-    return render_template('auth/index.html', services=services, status=status, ip=ip, versions=versions)
+    if search_form.validate_on_submit() or search:
+        if search and search_type:
+            search_form.search_content.data = search
+            search_form.search_type.data = search_type
+        services = search_form.get_result(search, search_type)
+        if services:
+            services = services.order_by(*order_by).paginate(page, pageset, False)
+        return render_template('auth/index.html', search_form=search_form, services=services, status=status, ip=ip, versions=versions)
+    services = Service.query.order_by(*order_by).paginate(page, pageset, False)
+    return render_template('auth/index.html', machineform=machineform, search_form=search_form, services=services, status=status, ip=ip, versions=versions, pageset=pageset)
 
 
 @service.route('/machine_option', methods=['POST'])
-@csrf.exempt
 def machine_option():
     if request.method == 'POST':
-        ipstart = request.form.get('ipstart')
-        ipend = request.form.get('ipend')
-        option = request.form.get('option')
-        ipstarts, ipends = validate_ipaddress(ipstart, ipend)
-        if not ipstarts and not ipends:
-            flash(u'请检查IP格式', 'danger')
+        machineform = AddMachineForm()
+        if machineform.validate_on_submit():
+            ipstarts, ipends = validate_ipaddress(machineform.startip.data, machineform.endip.data)
+            if not ipstarts and not ipends:
+                flash(u'请检查IP格式', 'danger')
+                return redirect(url_for('service.index'))
+            ssh_machine_shell(ipstarts, ipends, machineform.option.data)
+            flash(u'操作成功请稍后刷新页面查看结果', 'success')
             return redirect(url_for('service.index'))
-        ssh_machine_shell(ipstarts, ipends, option)
-        flash(u'操作成功请稍后刷新页面查看结果', 'success')
-        return redirect(url_for('service.index'))
+        return redirect(request.referrer)
 
 
 @service.route('/single_service_option/<string:options>/<int:service_id>')
 def single_service_option(options, service_id):
     service = Service.query.filter_by(id=service_id).first()
-    if service.status == 0 and options == "shutdown":
+    if service.status == 0 and options == "off":
         flash(u"机器已经关机", "danger")
-    if service.status == 2 and options == "restart":
+    if service.status == 2 and options == "reset":
         flash(u"已经在重启中", "danger")
-    if service.status == 1 and options == 'start':
+    if service.status == 1 and options == 'on':
         flash(u"已经开机", "danger")
     else:
         ssh_machine_shell(service.ip, option=options)
-        flash(u'重启成功', "success")
+        flash(u'操作成功', "success")
     return redirect(request.referrer)
 
 
@@ -84,7 +97,7 @@ def service_upload(service_id):
         service.version_id = service_version.id
         service.status = 4
         service = service.save()
-        ssh_machine_shell(service.ip, option='reset')
+        ssh_machine_shell(service.ip, option='on')
         flash(u'版本上传中，请稍后', 'success')
         return redirect(request.referrer)
     return redirect(request.referrer)

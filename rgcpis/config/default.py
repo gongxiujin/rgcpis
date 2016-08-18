@@ -8,7 +8,6 @@ class DefaultConfig(object):
     DEBUG = True
     TESTING = False
 
-    SEND_LOG = False
 
     INFO_LOG = 'access.log'
     ERROR_LOG = 'error.log'
@@ -23,6 +22,8 @@ class DefaultConfig(object):
     RENEW_SERVICE = ''
     UPLOAD_SERVICE = ''
     SEND_LOGS = False
+    LOG_ERRORS_REQUIRE_PASSCODE = False
+    LOG_ERRORS_PASSCODE = ''
 
     LOGIN_VIEW = "auth.login"
     REAUTH_VIEW = "auth.reauth"

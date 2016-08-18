@@ -9,7 +9,7 @@ from threading import Thread
 
 IPMI_OFFSET = 8
 
-
+STATUS = {1: 'on', 2: 'soft', 3: 'on'}
 def validate_ipaddress(startip, endip):
     startre = re.match(IPADDRESS_RE, startip)
     endre = re.match(IPADDRESS_RE, endip)
@@ -30,7 +30,7 @@ def thread_ssh(formt_ipmiip, option):
     from manage import app
     with app.app_context():
         for ip_dict in formt_ipmiip:
-            if option != 'off':
+            if option != 'soft':
                 ipmi_guide = "ipmitool  -H {IPA} -U USERID -P PASSW0RD -I lanplus chassis bootdev pxe".format(
                     IPA=ip_dict['ipmi_ip'])
                 guide = pexpect.spawn(ipmi_guide)
