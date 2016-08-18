@@ -141,7 +141,7 @@
                     {% else %}
                         <tr>
                         <td colspan="5">
-                            没有数据
+                            <p style="text-align: center;">没有数据</p>
                         </td>
                         </tr>
                     {% endfor %}
@@ -181,7 +181,12 @@
                 {% if services %}
                 <div class="pull-left col-md-12" style="padding: 0 0 10px">
                     <div class="pull-left">
-                    <form action="{{ url_for('service.index', ip=ip, status=status, content=search_form.search_content.data, search_type=search_form.search_type.data ) }}" method="get"  style="margin: 20px 0">
+                    <form action="{{ url_for('service.index') }}" method="get"  style="margin: 20px 0">
+                        <input type="hidden" name="ip" value="{{ ip }}">
+                        <input type="hidden" name="status" value="{{ status }}">
+                        <input type="hidden" name="content" value="{{ search_form.search_content.data }}">
+                        <input type="hidden" name="search_type" value="{{ search_form.search_type.data }}">
+                        <input type="hidden" name="page" value="{{ page }}">
                         <label>每页显示</label>
                         <select name="pageset" id="pageset">
                             <option value="25">25</option>

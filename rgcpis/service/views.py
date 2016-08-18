@@ -20,7 +20,7 @@ VERSION_RE = r'(\d{0,3}\.){1,2}(\d{0,3})'
 def index():
     if current_user is None and not current_user.is_authenticated:
         return redirect(url_for("users.login"))
-
+    requests = request
     page = request.args.get('page', 1, type=int)
     pageset = request.args.get('pageset', 25, type=int)
     status = request.args.get('status', type=int)
