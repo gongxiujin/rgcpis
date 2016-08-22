@@ -37,7 +37,7 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
                 while guide.isalive():
                     time.sleep(1)
                 result_guide = guide.read()
-                guide_record = MachineRecord(ip_dict['real_ip'], result_guide)
+                guide_record = MachineRecord(ip_dict['real_ip'], result_guide, option_ip)
                 guide_record.save()
             ssh_add = 'ipmitool -H {IPA} -U USERID -P PASSW0RD -I lanplus chassis power {option}'.format(
                 IPA=ip_dict['ipmi_ip'], option=option)
