@@ -47,6 +47,7 @@ def configure_extensions(app):
             return None
 
     login_manager.init_app(app)
+    login_manager.login_view = 'users.login'
 
 
 def register_buleprint(app):
