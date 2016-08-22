@@ -20,13 +20,13 @@ def validate_ipaddress(startip, endip):
         endips = [e for e in endip.split('.')]
         if startips[0] != endips[0] or startips[1] != endips[1] or startips[2] != endips[2]:
             return None, None
-        elif startips[-1] > endips[-1]:
+        elif int(startips[-1]) > int(endips[-1]):
             return None, None
         else:
             return startips, endips
 
 
-def thread_ssh(formt_ipmiip, option):
+def thread_ssh(formt_ipmiip, option, option_ip=None):
     from manage import app
     with app.app_context():
         for ip_dict in formt_ipmiip:
@@ -45,11 +45,11 @@ def thread_ssh(formt_ipmiip, option):
             while chile.isalive():
                 time.sleep(1)
             result = chile.read()
-            record = MachineRecord(ip_dict['real_ip'], result)
+            record = MachineRecord(ip_dict['real_ip'], result, option_ip)
             record.save()
 
 
-def ssh_machine_shell(starts, ends=None, option=None):
+def ssh_machine_shell(starts, ends=None, option=None, option_ip=None):
     ips = []
     formt_ipmiip = []
     if not ends:
@@ -61,8 +61,9 @@ def ssh_machine_shell(starts, ends=None, option=None):
             ips.append('.'.join(starts))
     for ip in ips:
         service = Service.query.filter_by(ip=ip).first()
+        service = service_last_options(service, option_ip)
         formt_ipmiip.append({'real_ip': ip, 'ipmi_ip': service.get_ipmiip()})
-    thread = Thread(target=thread_ssh, args=(formt_ipmiip, option))
+    thread = Thread(target=thread_ssh, args=(formt_ipmiip, option, option_ip))
     thread.start()
     # thread_ssh(formt_ipmiip, option)
 

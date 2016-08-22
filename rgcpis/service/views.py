@@ -4,7 +4,7 @@ from rgcpis.extensions import csrf
 from flask_login import current_app, login_required, current_user
 from flask_login import request
 from rgcpis.service.forms import SearchServiceForm, AddMachineForm
-from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, upload_machine_options, \
+from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, \
     service_last_options
 from rgcpis.service.models import Service, MachineRecord, ServiceVersion
 from rgcpis.utils.auth import json_response, response_file
@@ -51,6 +51,7 @@ def index():
 
 @service.route('/machine_option', methods=['POST'])
 @login_required
+@csrf.exempt
 def machine_option():
     if request.method == 'POST':
         machineform = AddMachineForm()
@@ -59,7 +60,7 @@ def machine_option():
             if not ipstarts and not ipends:
                 flash(u'请检查IP格式', 'danger')
                 return redirect(url_for('service.index'))
-            ssh_machine_shell(ipstarts, ipends, machineform.option.data)
+            ssh_machine_shell(ipstarts, ends=ipends, option=machineform.option.data, option_ip=request.remote_addr)
             flash(u'操作成功请稍后刷新页面查看结果', 'success')
             return redirect(url_for('service.index'))
         return redirect(request.referrer)
@@ -68,6 +69,7 @@ def machine_option():
 @service.route('/single_service_option/<string:options>/<int:service_id>')
 @login_required
 def single_service_option(options, service_id):
+    option_ip = request.remote_addr
     service = Service.query.filter_by(id=service_id).first()
     if service.status == 0 and options == "soft":
         flash(u"机器已经关机", "danger")
@@ -76,7 +78,7 @@ def single_service_option(options, service_id):
     if service.status == 1 and options == 'on':
         flash(u"已经开机", "danger")
     else:
-        ssh_machine_shell(service.ip, option=options)
+        ssh_machine_shell(service.ip, option=options, option_ip=option_ip)
         flash(u'操作成功', "success")
     return redirect(request.referrer)
 
@@ -102,7 +104,7 @@ def service_upload(service_id):
         service.version_id = service_version.id
         service.status = 4
         service = service.save()
-        ssh_machine_shell(service.ip, option='on')
+        ssh_machine_shell(service.ip, option='on', option_ip=request.remote_addr)
         flash(u'版本上传中，请稍后', 'success')
         return redirect(request.referrer)
     return redirect(request.referrer)
@@ -130,7 +132,7 @@ def renew_services():
             service = service.save()
             if option == 'now':
                 flash(u'机器正在重装中，请注意日志', 'success')
-                ssh_machine_shell(service.ip, option='reset')
+                ssh_machine_shell(service.ip, option='reset', option_ip=request.remote_addr)
             else:
                 flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
         return redirect(request.referrer)
@@ -148,7 +150,7 @@ def get_service_status():
         return json_response(1, error_msg='error')
     filename = 'aoe.ipxe'
     if service.status in [2, 4]:
-        record = MachineRecord(service.ip, u'机器引导中')
+        record = MachineRecord(service.ip, u'机器引导中', request_ip)
         record.save()
         configs = current_app.config['DHCP_NETWORK_START']
     else:
@@ -170,14 +172,14 @@ def service_config_file():
     if service.status in [2, 3]:
         service.status = 3
         service.save()
-        record = MachineRecord(service.ip, u'开始重装系统')
+        record = MachineRecord(service.ip, u'开始重装系统', request_ip)
         record.save()
         configs = render_template('renew.bat', version=service.version)
         # configs = current_app.config['RENEW_SERVICE'].format(version=service.version)
     elif service.status in [4, 5]:
         service.status = 5
         service.save()
-        record = MachineRecord(service.ip, u'开始备份系统')
+        record = MachineRecord(service.ip, u'开始备份系统', request_ip)
         record.save()
         configs = render_template('upload.bat', version=service.version)
     return response_file(data=configs, filename=filename)
