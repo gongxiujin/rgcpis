@@ -5,9 +5,10 @@ from flask_login import current_app, login_required, current_user
 from flask_login import request
 from rgcpis.service.forms import SearchServiceForm, AddMachineForm
 from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, \
-    service_last_options, start_disckless_operation, shutdown_server
+    service_last_options, start_disckless_reload, shutdown_server, start_disckless_backup
 from rgcpis.service.models import Service, MachineRecord, ServiceVersion
 from rgcpis.utils.auth import json_response, response_file
+from rgcpis.utils.decorator import check_ipxe_status, api_check_ipxe_status
 
 service = Blueprint('service', __name__)
 COPAY_PER_PAGE = 20
@@ -25,32 +26,50 @@ def index():
     pageset = request.args.get('pageset', 25, type=int)
     status = request.args.get('status', type=int)
     ip = request.args.get('ip', type=int)
-    search = request.args.get('content')
-    search_type = request.args.get('search_type')
-    versions = ServiceVersion.query.all()
-    search_form = SearchServiceForm()
-    machineform = AddMachineForm()
     order_by = []
     if status is not None:
         order_by.append('status ' + ORDER_STATUS[status])
     if ip is not None:
         order_by.append('ipmi_ip ' + ORDER_STATUS[ip])
+    cluster = request.args.get('cluster', 2, type=int)
+    search = request.args.get('content')
+    search_type = request.args.get('search_type')
+    search_form = SearchServiceForm()
+    is_search = False
     if search_form.validate_on_submit() or search:
         if search and search_type:
             search_form.search_content.data = search
             search_form.search_type.data = search_type
-        services = search_form.get_result(search, search_type)
+        services = search_form.get_result(search, search_type, cluster)
         if services:
             services = services.order_by(*order_by).paginate(page, pageset, False)
-        return render_template('auth/index.html', search_form=search_form, machineform=machineform, services=services,
-                               status=status, ip=ip, versions=versions, pageset=pageset)
-    services = Service.query.order_by(*order_by).paginate(page, pageset, False)
-    return render_template('auth/index.html', machineform=machineform, search_form=search_form, services=services,
-                           status=status, ip=ip, versions=versions, pageset=pageset)
+        is_search = True
+
+    if cluster == 2:
+        versions = ServiceVersion.query.filter_by(type=1).all()
+        machineform = AddMachineForm()
+        if is_search:
+            return render_template('auth/index.html', search_form=search_form, machineform=machineform,
+                                   services=services,
+                                   status=status, ip=ip, versions=versions, pageset=pageset, cluster=cluster)
+        services = Service.query.filter_by(cluster_id=cluster).order_by(*order_by).paginate(page, pageset, False)
+        return render_template('auth/index.html', machineform=machineform, search_form=search_form, services=services,
+                               status=status, ip=ip, versions=versions, pageset=pageset, cluster=cluster)
+    elif cluster == 1:
+        versions = ServiceVersion.query.filter_by(type=2).all()
+        machineform = AddMachineForm()
+        if is_search:
+            return render_template('auth/index.html', search_form=search_form, machineform=machineform,
+                                   services=services,
+                                   status=status, ip=ip, versions=versions, pageset=pageset, cluster=cluster)
+        services = Service.query.filter_by(cluster_id=cluster).order_by(*order_by).paginate(page, pageset, False)
+        return render_template('auth/index.html', machineform=machineform, search_form=search_form, services=services,
+                               status=status, ip=ip, versions=versions, pageset=pageset, cluster=cluster)
 
 
 @service.route('/machine_option', methods=['POST'])
 @login_required
+@check_ipxe_status
 @csrf.exempt
 def machine_option():
     if request.method == 'POST':
@@ -68,6 +87,7 @@ def machine_option():
 
 @service.route('/single_service_option/<string:options>/<int:service_id>')
 @login_required
+@check_ipxe_status
 def single_service_option(options, service_id):
     option_ip = request.remote_addr
     service = Service.query.filter_by(id=service_id).first()
@@ -85,8 +105,11 @@ def single_service_option(options, service_id):
 
 @service.route('/service_upload/<int:service_id>', methods=["POST"])
 @login_required
+@check_ipxe_status
 def service_upload(service_id):
     import re
+    cluster = request.args.get('cluster', 2, type=int)
+    service = Service.query.filter_by(id=service_id).first_or_404()
     version = request.form.get("new_version")
     mach = re.match(VERSION_RE, version)
     if not mach:
@@ -96,18 +119,37 @@ def service_upload(service_id):
     if service_version:
         flash(u'版本号已存在', 'danger')
         return redirect(request.referrer)
-    if version and description:
-        service_version = ServiceVersion(version, description)
-        service_version = service_version.save()
-        service = Service.query.filter_by(id=service_id).first_or_404()
-        service = service_last_options(service, request.remote_addr)
-        service.version_id = service_version.id
-        service.status = 4
-        service = service.save()
-        ssh_machine_shell(service.ip, option='on', option_ip=request.remote_addr)
-        flash(u'版本上传中，请稍后', 'success')
+    if cluster == 2:
+        if version and description:
+            service_version = ServiceVersion(version, description)
+            service_version = service_version.save()
+            service = service_last_options(service, request.remote_addr)
+            service.version_id = service_version.id
+            service.status = 4
+            service = service.save()
+            ssh_machine_shell(service.ip, option='on', option_ip=request.remote_addr)
+            flash(u'版本上传中，请稍后', 'success')
+            return redirect(request.referrer)
         return redirect(request.referrer)
-    return redirect(request.referrer)
+    elif cluster == 1:
+        try:
+            import re
+            from datetime import datetime
+            if not mach:
+                flash(u'版本号格式错误', 'danger')
+            description = service.ip + '@' + datetime.strftime(datetime.now(), '%Y%m%d%H')
+            service_version = ServiceVersion(version, description, type=2)
+            service_version = service_version.save()
+            service = service_last_options(service, request.remote_addr)
+            service.version_id = service_version.id
+            service = service.save()
+            start_disckless_backup(service_id)
+            flash(u'备份母盘成功', 'success')
+            return redirect(request.referrer)
+        except Exception as e:
+            current_app.logger.error(e.message)
+            flash('error:' + e.message, 'danger')
+            return redirect(request.referrer)
 
 
 @service.route('/echo_machine_record')
@@ -118,9 +160,11 @@ def echolog():
 
 @service.route('/renew_services', methods=['POST'])
 @login_required
+@check_ipxe_status
 @csrf.exempt
 def renew_services():
     try:
+        cluster = request.args.get('cluster', 2, type=int)
         version = request.form.get('version', type=int)
         option = request.form.get('option')
         ids = request.form.getlist('service_id', type=int)
@@ -129,20 +173,26 @@ def renew_services():
             service = service_last_options(service, request.remote_addr)
             service.status = 2
             service.version_id = version
-            service = service.save()
             if option == 'now':
                 flash(u'机器正在重装中，请注意日志', 'success')
-                ssh_machine_shell(service.ip, option='reset', option_ip=request.remote_addr)
+                if cluster == 1:
+                    service.iscsi_status = 0
+                    shutdown_server(service.ip)
+                else:
+                    ssh_machine_shell(service.ip, option='reset', option_ip=request.remote_addr)
             else:
                 flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
+            service = service.save()
         return redirect(request.referrer)
     except Exception as e:
+        flash(u'重装失败', 'danger')
         current_app.logger.error('error in renew service')
         current_app.logger.error(e)
         return redirect(request.referrer)
 
 
 @service.route("/check_start_status/aoe.ipxe")
+@api_check_ipxe_status
 def get_service_status():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
@@ -161,6 +211,7 @@ def get_service_status():
 
 
 @service.route("/service_config_file/install.bat")
+@api_check_ipxe_status
 def service_config_file():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
@@ -186,6 +237,7 @@ def service_config_file():
 
 
 @service.route("/notification_service_status/")
+@api_check_ipxe_status
 def notification_service_status():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
@@ -206,6 +258,7 @@ def notification_service_status():
 
 
 @service.route("/service_start/")
+@api_check_ipxe_status
 def service_start():
     request_ip = request.remote_addr
     service = Service.query.filter_by(ip=request_ip).first()
@@ -217,18 +270,6 @@ def service_start():
     return json_response(0)
 
 
-@service.route("/iscsi_reload/")
-def iscsi_reload():
-    request_ip = request.remote_addr
-    ids = request.form.getlist('service_id', type=int)
-    for i in ids:
-        service = Service.query.filter_by(id=i).first()
-        shutdown_server(service.ip)
-        service.iscsi_status = 0
-        service.update_ip = request_ip
-        service.save()
-    flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
-    return redirect(request.referrer)
 
 
 @service.route("/start_disckless/")
@@ -239,7 +280,7 @@ def start_disckless():
         record.save()
         service = Service.query.filter_by(ip=request_ip).first()
         if service.iscsi_status == 0:
-            start_disckless_operation(request_ip)
+            start_disckless_reload(request_ip)
         return json_response(0)
     except Exception as e:
         current_app.logger.error(e.message)

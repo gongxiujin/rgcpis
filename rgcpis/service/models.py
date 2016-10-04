@@ -8,7 +8,7 @@ class Service(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     ip = db.Column(db.String(15), nullable=False, index=True)
-    ip_mac = db.Column(db.String(30), nullable=False, index=True)
+    ip_mac = db.Column(db.String(30)) #nullable=False, index=True
     ipmi_ip = db.Column(db.String(15), nullable=False)
     ipmi_ip_mac = db.Column(db.String(30))
     date_joined = db.Column(db.DateTime, default=datetime.now())
@@ -16,12 +16,14 @@ class Service(db.Model):
     status = db.Column(db.Integer, default=0, nullable=True)  # 0关机  1开机  2重装前引导 3重装中  4备份前引导 5  上传版本中 6 安装完毕重启中
     iscsi_status = db.Column(db.Integer, default=1, nullable=True)
     version_id = db.Column(db.ForeignKey('service_version.id'), nullable=True)
+    cluster_id = db.Column(db.Integer(), db.ForeignKey("service_cluster.id"))
     cluster = db.relationship("Cluster", backref=db.backref('cluster', lazy='dynamic'), uselist=False)
     update_ip = db.Column(db.String(15))
 
-    def __init__(self, ip, iscsi_status=None):
+    def __init__(self, ip, iscsi_status=None, cluster_id=2):
         self.ip = ip
         self.status = 0
+        self.cluster_id=cluster_id
         if iscsi_status:
             self.iscsi_status = iscsi_status
         self.date_joined = datetime.now()
@@ -100,11 +102,13 @@ class ServiceVersion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     version = db.Column(db.String(30), nullable=False, unique=True)
     description = db.Column(db.Text(), nullable=False)
+    type = db.Column(db.Integer, default=1) # 1  ipxe   2  disckless
     create_time = db.Column(db.DateTime(), default=datetime.now())
 
-    def __init__(self, version, description):
+    def __init__(self, version, description, type=1):
         self.version = version
         self.description = description
+        self.type = type
         self.create_time = datetime.now()
 
     @classmethod

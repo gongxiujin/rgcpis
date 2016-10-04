@@ -3,6 +3,7 @@ import re
 import pexpect
 from rgcpis.service.forms import IPADDRESS_RE
 import time
+from datetime import datetime
 from flask_login import current_app
 from rgcpis.service.models import MachineRecord, Service
 from threading import Thread
@@ -166,16 +167,16 @@ def shutdown_server(ip):
     return result['status']
 
 
-def start_disckless_operation(ip):
+def start_disckless_reload(ip):
     service = Service.query.filter_by(ip=ip).first()
     disconnect = 'tgt-admin --delete iqn.2016-08.renderg.com:{}'.format(ip)
     result = pexpect.spawn(disconnect)
     if result.read():
         raise Exception(message=result.read())
     save_machinerecord_log(ip, '停止映射', ip)
-    delete_disck = 'zfs destroy storage/vhdxvolume{}_{}'.format(service.version, ip)
-    clone_disck = 'zfs clone storage/vhdxvolume{version}@20160830 storage/vhdxvolume{version}_{ip}'.format(
-        version='143', ip='172.17.2.49')
+    delete_disck = 'zfs destroy storage/vh{}_{}'.format(service.version, ip)
+    clone_disck = 'zfs clone storage/vh{version}_{description} storage/vh{version}_{ip}'.format(
+        version='143', ip='172.17.2.49', description=service.version_description)
     result = pexpect.spawn(delete_disck)
     if result.read():
         raise Exception(message=result.read())
@@ -184,7 +185,7 @@ def start_disckless_operation(ip):
     if result.read():
         raise Exception(message=result.read())
     save_machinerecord_log(ip, '更新ZFS:克隆新卷', ip)
-    tgt_conf = '''<target iqn.2016-08.renderg.com:{ip}>\rbacking-store /dev/storage/vhdxvolume{version}_{ip}\r</target>'''.format(
+    tgt_conf = '''<target iqn.2016-08.renderg.com:{ip}>\rbacking-store /dev/storage/vh{version}_{ip}\r</target>'''.format(
         ip=ip, version=service.version)
     with open('/etc/tgt/conf.d/{}.conf'.format(ip), 'w+') as f:
         f.write(tgt_conf)
@@ -195,3 +196,10 @@ def start_disckless_operation(ip):
     if result.read():
         raise Exception(message=result.read())
     save_machinerecord_log(ip, '更新tgt', ip)
+
+def start_disckless_backup(service_id):
+    service = Service.query.filter_by(id=service_id).first()
+    ssh = 'zfs snapshot storage/vh{}_{}'.format(service.version, service.version_description)
+    result = pexpect.spawn(ssh)
+    if result.read():
+        raise Exception(message=result.read())

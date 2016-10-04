@@ -61,6 +61,21 @@ def init_service_machines(offset):
                     new_service.save()
     print 'over'
 
+@manager.command
+def init_disckless_machines():
+    with app.app_context():
+        current_app.logger.info('strt')
+        ips = ['172.17.2.{}'.format(i) for i in xrange(1, 151)]+['172.17.3.{}'.format(x) for x in xrange(1, 254)]
+        services = {}
+        for i in ips:
+            split_ip = i.split('.')
+            services[i] = '192.168.{:03d}.{:03d}'.format(int(split_ip[-2]), int(split_ip[-1]))
+        for ip in services:
+            new_service = Service(ip, iscsi_status=1, cluster_id=1)
+            new_service.ipmi_ip = services[ip]
+            new_service.save()
+
+    print 'over'
 
 @manager.option('-u', '--username', dest='username')
 @manager.option('-p', '--password', dest='password')

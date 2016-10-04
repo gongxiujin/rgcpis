@@ -42,18 +42,18 @@ class SearchServiceForm(Form):
         ("3", u'状态')])
     submit = SubmitField(u'搜索')
 
-    def get_result(self, countent=None, search_type=None):
+    def get_result(self, countent=None, search_type=None, cluster=None):
         from rgcpis.service.models import Service, ServiceVersion
         query = self.search_content.data if not countent else countent
         search_type = self.search_type.data if not search_type else search_type
         if query:
             if search_type == '1':
-                return Service.query.filter(Service.ip.like('%' + query + '%'))
+                return Service.query.filter(Service.ip.like('%' + query + '%'), Service.cluster_id==cluster)
             elif search_type == '2':
                 version_id = ServiceVersion.get_version_id(query)
-                return Service.query.filter_by(version_id=version_id) if version_id else None
+                return Service.query.filter_by(version_id=version_id, cluster_id=cluster) if version_id else None
             else:
-                return Service.query.filter(Service.status.like('%' + query + '%'))
+                return Service.query.filter(Service.status.like('%' + query + '%'), Service.cluster_id==cluster)
         else:
             return Service.query
 

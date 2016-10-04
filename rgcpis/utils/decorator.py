@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 from flask_login import current_user
 from functools import wraps
 import datetime
 from rgcpis.config.default import DefaultConfig
-from flask import request
-from rgcpis.utils.auth import get_remote_addr
+from flask import request, flash, redirect
+from rgcpis.utils.auth import get_remote_addr, json_response
 
 
 def update_current_and_lastip(func):
@@ -22,13 +23,23 @@ def update_current_and_lastip(func):
 
     return decorated_function
 
-def check_ipxe_status(func):
+def api_check_ipxe_status(func):
     @wraps(func)
     def decorated_function(*args, **kwargs):
         if not DefaultConfig.IPXE_STATUS:
-            return False
+            return json_response(1)
         return func(*args, **kwargs)
 
     return decorated_function
 
+def check_ipxe_status(func):
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        if not DefaultConfig.IPXE_STATUS:
+            flash(u'ipxe不允许被操作', 'danger')
+            # flash('sfsds', 'danger')
+            return redirect(request.referrer)
+        return func(*args, **kwargs)
+
+    return decorated_function
 

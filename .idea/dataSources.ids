@@ -14,6 +14,8 @@
       <column name="id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
       <column name="ip" sqlType="VARCHAR" precision="15" scale="0" nullable="false" jdbcType="12"/>
       <column name="result" sqlType="TEXT" precision="65535" scale="0" nullable="false" jdbcType="-1"/>
+      <column name="create_time" sqlType="DATETIME" precision="19" scale="0" nullable="true" jdbcType="93"/>
+      <column name="option_ip" sqlType="VARCHAR" precision="21" scale="0" nullable="true" jdbcType="12"/>
       <primary-key name="PRIMARY" columns="id"/>
     </table>
     <table name="service" schema="" catalog="cpis_db" type="TABLE">
@@ -24,12 +26,25 @@
       <column name="update_ip" sqlType="VARCHAR" precision="15" scale="0" nullable="true" jdbcType="12"/>
       <column name="status" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
       <column name="ipmi_ip" sqlType="VARCHAR" precision="15" scale="0" nullable="false" jdbcType="12"/>
-      <column name="ip_mac" sqlType="VARCHAR" precision="30" scale="0" nullable="true" jdbcType="12"/>
+      <column name="ip_mac" sqlType="VARCHAR" precision="30" scale="0" nullable="false" jdbcType="12"/>
       <column name="ipmi_ip_mac" sqlType="VARCHAR" precision="30" scale="0" nullable="true" jdbcType="12"/>
       <column name="version_id" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
+      <column name="cluster_id" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
+      <column name="iscsi_status" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
       <primary-key name="PRIMARY" columns="id"/>
       <foreign-key name="service_ibfk_1" columns="version_id" ref-table="service_version" ref-schema="" ref-catalog="cpis_db" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
-      <index name="index_name" unique="false" columns="ip"/>
+      <foreign-key name="service_ibfk_2" columns="cluster_id" ref-table="service_cluster" ref-schema="" ref-catalog="cpis_db" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
+      <index name="ix_service_ip" unique="false" columns="ip"/>
+      <index name="ix_service_ip_mac" unique="false" columns="ip_mac"/>
+    </table>
+    <table name="service_cluster" schema="" catalog="cpis_db" type="TABLE">
+      <column name="id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="name" sqlType="VARCHAR" precision="10" scale="0" nullable="false" jdbcType="12"/>
+      <column name="description" sqlType="VARCHAR" precision="255" scale="0" nullable="true" jdbcType="12"/>
+      <column name="create_time" sqlType="DATETIME" precision="19" scale="0" nullable="true" jdbcType="93"/>
+      <primary-key name="PRIMARY" columns="id"/>
+      <exported-key name="service_ibfk_2" table="service" schema="" catalog="cpis_db" columns="cluster_id"/>
+      <index name="name" unique="true" columns="name"/>
     </table>
     <table name="service_version" schema="" catalog="cpis_db" type="TABLE">
       <column name="id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
