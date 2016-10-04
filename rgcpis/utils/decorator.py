@@ -1,6 +1,7 @@
 from flask_login import current_user
 from functools import wraps
 import datetime
+from rgcpis.config.default import DefaultConfig
 from flask import request
 from rgcpis.utils.auth import get_remote_addr
 
@@ -20,3 +21,14 @@ def update_current_and_lastip(func):
         return func(*args, **kwargs)
 
     return decorated_function
+
+def check_ipxe_status(func):
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        if not DefaultConfig.IPXE_STATUS:
+            return False
+        return func(*args, **kwargs)
+
+    return decorated_function
+
+

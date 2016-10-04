@@ -7,7 +7,7 @@ class DefaultConfig(object):
         os.path.dirname(__file__)))))
     DEBUG = True
     TESTING = False
-
+    IPXE_STATUS = False
 
     INFO_LOG = 'access.log'
     ERROR_LOG = 'error.log'
@@ -37,6 +37,7 @@ class DefaultConfig(object):
 
     SERVICE_MACHINE_IP = {1: ['172.20.1.1', '172.20.1.250'],
                           2: ['172.20.2.1', '172.20.2.250'],
-                          3: ['172.20.3.1', '172.20.3.160']}
+                          3: ['172.20.3.1', '172.20.3.160'],
+                          4: ['172.19.0.1', '172.19.0.136']}
 
     SERVICE_STATUS = {1: u'开机', 0: u'关机', 3: u'重装系统中',2: u'重装前引导', 4: u'备份前引导', 5: u'上传版本中', 6: u'安装完毕重启中'}

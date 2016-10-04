@@ -10,6 +10,8 @@ from threading import Thread
 IPMI_OFFSET = 8
 
 STATUS = {1: 'on', 2: 'soft', 3: 'on'}
+
+
 def validate_ipaddress(startip, endip):
     startre = re.match(IPADDRESS_RE, startip)
     endre = re.match(IPADDRESS_RE, endip)
@@ -141,6 +143,11 @@ def check_service(service):
     return True
 
 
+def save_machinerecord_log(request_ip, operation, operation_ip):
+    record = MachineRecord(request_ip, operation, operation_ip)
+    record.save()
+
+
 def service_last_options(service, ip):
     service.update_ip = ip
     return service.save()
@@ -149,12 +156,42 @@ def service_last_options(service, ip):
 def upload_machine_options(service, version):
     pass
 
+
+def shutdown_server(ip):
+    import rpyc
+    c = rpyc.connect(ip, 60000)
+    result = c.root.shutdown()
+    if not result['status']:
+        raise Exception(message=result['result'])
+    return result['status']
+
+
 def start_disckless_operation(ip):
     service = Service.query.filter_by(ip=ip).first()
-    ip.split('.')
-    disconnect = 'tgt-admin --delete iqn.2016-08.renderg.com:{}_{}'.format(ip.split('.')[-2], ip.split('.')[-1])
+    disconnect = 'tgt-admin --delete iqn.2016-08.renderg.com:{}'.format(ip)
     result = pexpect.spawn(disconnect)
     if result.read():
         raise Exception(message=result.read())
-    delete_disck = 'zfs destroy storage/vhdxvolume141_{}'.format(ip)
-    clone_disck = 'zfs destroy storage/vhdxvolume141_{}'.format(ip)
+    save_machinerecord_log(ip, '停止映射', ip)
+    delete_disck = 'zfs destroy storage/vhdxvolume{}_{}'.format(service.version, ip)
+    clone_disck = 'zfs clone storage/vhdxvolume{version}@20160830 storage/vhdxvolume{version}_{ip}'.format(
+        version='143', ip='172.17.2.49')
+    result = pexpect.spawn(delete_disck)
+    if result.read():
+        raise Exception(message=result.read())
+    save_machinerecord_log(ip, '更新ZFS:删除原有卷', ip)
+    result = pexpect.spawn(clone_disck)
+    if result.read():
+        raise Exception(message=result.read())
+    save_machinerecord_log(ip, '更新ZFS:克隆新卷', ip)
+    tgt_conf = '''<target iqn.2016-08.renderg.com:{ip}>\rbacking-store /dev/storage/vhdxvolume{version}_{ip}\r</target>'''.format(
+        ip=ip, version=service.version)
+    with open('/etc/tgt/conf.d/{}.conf'.format(ip), 'w+') as f:
+        f.write(tgt_conf)
+        f.close()
+    save_machinerecord_log(ip, '更新配置文件', ip)
+    update_tgt = 'tgt-admin --update iqn.2016-08.renderg.com:{}'.format(ip)
+    result = pexpect.spawn(update_tgt)
+    if result.read():
+        raise Exception(message=result.read())
+    save_machinerecord_log(ip, '更新tgt', ip)

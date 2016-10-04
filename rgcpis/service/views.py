@@ -5,7 +5,7 @@ from flask_login import current_app, login_required, current_user
 from flask_login import request
 from rgcpis.service.forms import SearchServiceForm, AddMachineForm
 from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, \
-    service_last_options, start_disckless_operation
+    service_last_options, start_disckless_operation, shutdown_server
 from rgcpis.service.models import Service, MachineRecord, ServiceVersion
 from rgcpis.utils.auth import json_response, response_file
 
@@ -198,7 +198,7 @@ def notification_service_status():
         result = u'系统备份完成,准备开机'
     else:
         result = u'操作完成,准备开机'
-    record = MachineRecord(service.ip, result)
+    record = MachineRecord(service.ip, result, option_ip=request_ip)
     record.save()
     service.status = 6
     service.save()
@@ -216,14 +216,32 @@ def service_start():
     service.save()
     return json_response(0)
 
-@service.route("/iscsi_start/")
-def iscsi_start():
+
+@service.route("/iscsi_reload/")
+def iscsi_reload():
     request_ip = request.remote_addr
-    service = Service.query.filter_by(ip=request_ip).first()
-    if not service:
-        current_app.logger.error(request_ip + 'not in service')
-        return json_response(1)
-    if service.iscsi_status == 0 :
-        start_disckless_operation(request_ip)
-    service.save()
-    return json_response(0)
+    ids = request.form.getlist('service_id', type=int)
+    for i in ids:
+        service = Service.query.filter_by(id=i).first()
+        shutdown_server(service.ip)
+        service.iscsi_status = 0
+        service.update_ip = request_ip
+        service.save()
+    flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
+    return redirect(request.referrer)
+
+
+@service.route("/start_disckless/")
+def start_disckless():
+    request_ip = request.remote_addr
+    try:
+        record = MachineRecord(request_ip, u'开始重装系统', request_ip)
+        record.save()
+        service = Service.query.filter_by(ip=request_ip).first()
+        if service.iscsi_status == 0:
+            start_disckless_operation(request_ip)
+        return json_response(0)
+    except Exception as e:
+        current_app.logger.error(e.message)
+        record = MachineRecord(request_ip, 'reload error:' + e.message, request_ip)
+        record.save()
