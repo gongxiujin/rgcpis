@@ -148,3 +148,13 @@ def service_last_options(service, ip):
 
 def upload_machine_options(service, version):
     pass
+
+def start_disckless_operation(ip):
+    service = Service.query.filter_by(ip=ip).first()
+    ip.split('.')
+    disconnect = 'tgt-admin --delete iqn.2016-08.renderg.com:{}_{}'.format(ip.split('.')[-2], ip.split('.')[-1])
+    result = pexpect.spawn(disconnect)
+    if result.read():
+        raise Exception(message=result.read())
+    delete_disck = 'zfs destroy storage/vhdxvolume141_{}'.format(ip)
+    clone_disck = 'zfs destroy storage/vhdxvolume141_{}'.format(ip)

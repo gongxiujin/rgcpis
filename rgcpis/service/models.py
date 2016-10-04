@@ -14,12 +14,15 @@ class Service(db.Model):
     date_joined = db.Column(db.DateTime, default=datetime.now())
     last_update = db.Column(db.DateTime, default=datetime.now())
     status = db.Column(db.Integer, default=0, nullable=True)  # 0关机  1开机  2重装前引导 3重装中  4备份前引导 5  上传版本中 6 安装完毕重启中
+    iscsi_status = db.Column(db.Integer, default=1, nullable=True)
     version_id = db.Column(db.ForeignKey('service_version.id'), nullable=True)
     update_ip = db.Column(db.String(15))
 
-    def __init__(self, ip):
+    def __init__(self, ip, iscsi_status=None):
         self.ip = ip
         self.status = 0
+        if iscsi_status:
+            self.iscsi_status = iscsi_status
         self.date_joined = datetime.now()
 
     def set_ipmiip(self, offset):

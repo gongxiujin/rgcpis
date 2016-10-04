@@ -5,7 +5,7 @@ from flask_login import current_app, login_required, current_user
 from flask_login import request
 from rgcpis.service.forms import SearchServiceForm, AddMachineForm
 from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, \
-    service_last_options
+    service_last_options, start_disckless_operation
 from rgcpis.service.models import Service, MachineRecord, ServiceVersion
 from rgcpis.utils.auth import json_response, response_file
 
@@ -213,5 +213,17 @@ def service_start():
         current_app.logger.error(request_ip + 'not in service')
         return json_response(1)
     service.status = 1
+    service.save()
+    return json_response(0)
+
+@service.route("/iscsi_start/")
+def iscsi_start():
+    request_ip = request.remote_addr
+    service = Service.query.filter_by(ip=request_ip).first()
+    if not service:
+        current_app.logger.error(request_ip + 'not in service')
+        return json_response(1)
+    if service.iscsi_status == 0 :
+        start_disckless_operation(request_ip)
     service.save()
     return json_response(0)

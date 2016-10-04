@@ -19,8 +19,6 @@ class DefaultConfig(object):
     WTF_CSRF_SECRET_KEY = 'donottellyou'
     DHCP_NETWORK_START = '#!ipxe\nset keep-san 1\nchain http://172.20.0.51/winpe/winpe/wimboot.ipxe'
     BOOT_START = '#!ipxe\nsanboot --no-describe --drive 0x80'
-    RENEW_SERVICE = ''
-    UPLOAD_SERVICE = ''
     SEND_LOGS = False
     LOG_ERRORS_REQUIRE_PASSCODE = False
     LOG_ERRORS_PASSCODE = ''
