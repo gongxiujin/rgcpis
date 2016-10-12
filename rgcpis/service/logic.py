@@ -5,7 +5,7 @@ from rgcpis.service.forms import IPADDRESS_RE
 import time
 from datetime import datetime
 from flask_login import current_app
-from rgcpis.service.models import MachineRecord, Service
+from rgcpis.service.models import MachineRecord, Service, ServiceVersion
 from threading import Thread
 
 IPMI_OFFSET = 8
@@ -201,13 +201,16 @@ def start_disckless_reload(ip):
     service.save()
 
 
-def start_disckless_backup(service_id, version):
-    service = Service.query.filter_by(id=service_id).first()
-    # ssh = 'zfs snapshot storage/vh{}_{}'.format(service.version, service.version_description)
-    ssh = 'zfs clone storage/vh{version}_{description} storage/vh{new_version}_{ip}'.format(version=service.version,
-                                                                                            description=service.version_description,
-                                                                                            new_version=version,
-                                                                                            ip=version.ip)
+def start_disckless_backup(version_id, old_service):
+    version = ServiceVersion.query.filter_by(id=version_id).first()
+    ssh = 'zfs clone storage/vh{version}_{description} storage/vh{new_version}_{ip}'.format(version=old_service.version,
+                                                                                            description=old_service.version_description,
+                                                                                            new_version=version.version,
+                                                                                            ip=old_service.ip)
+    result = pexpect.spawn(ssh)
+    if result.read():
+        raise Exception(message=result.read())
+    ssh = 'zfs snapshot storage/vh{}_{}'.format(version.version, version.version_description)
     result = pexpect.spawn(ssh)
     if result.read():
         raise Exception(message=result.read())
