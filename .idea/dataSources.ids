@@ -26,7 +26,7 @@
       <column name="update_ip" sqlType="VARCHAR" precision="15" scale="0" nullable="true" jdbcType="12"/>
       <column name="status" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
       <column name="ipmi_ip" sqlType="VARCHAR" precision="15" scale="0" nullable="false" jdbcType="12"/>
-      <column name="ip_mac" sqlType="VARCHAR" precision="30" scale="0" nullable="false" jdbcType="12"/>
+      <column name="ip_mac" sqlType="VARCHAR" precision="30" scale="0" nullable="true" jdbcType="12"/>
       <column name="ipmi_ip_mac" sqlType="VARCHAR" precision="30" scale="0" nullable="true" jdbcType="12"/>
       <column name="version_id" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
       <column name="cluster_id" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
@@ -35,7 +35,6 @@
       <foreign-key name="service_ibfk_1" columns="version_id" ref-table="service_version" ref-schema="" ref-catalog="cpis_db" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
       <foreign-key name="service_ibfk_2" columns="cluster_id" ref-table="service_cluster" ref-schema="" ref-catalog="cpis_db" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
       <index name="ix_service_ip" unique="false" columns="ip"/>
-      <index name="ix_service_ip_mac" unique="false" columns="ip_mac"/>
     </table>
     <table name="service_cluster" schema="" catalog="cpis_db" type="TABLE">
       <column name="id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
@@ -51,6 +50,7 @@
       <column name="version" sqlType="VARCHAR" precision="30" scale="0" nullable="false" jdbcType="12"/>
       <column name="create_time" sqlType="DATETIME" precision="19" scale="0" nullable="true" jdbcType="93"/>
       <column name="description" sqlType="TEXT" precision="65535" scale="0" nullable="false" jdbcType="-1"/>
+      <column name="type" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
       <primary-key name="PRIMARY" columns="id"/>
       <exported-key name="service_ibfk_1" table="service" schema="" catalog="cpis_db" columns="version_id"/>
       <index name="version" unique="true" columns="version"/>
@@ -67,5 +67,8 @@
       <primary-key name="PRIMARY" columns="id"/>
       <index name="ix_users_username" unique="true" columns="username"/>
     </table>
+  </data-source>
+  <data-source name="MySQL - cpis_db@172.17.2.251" uuid="57364ffc-063e-4362-a228-2ca42a1e0c43">
+    <database-info product="" version="" jdbc-version="" driver-name="" driver-version=""/>
   </data-source>
 </component>

@@ -162,7 +162,6 @@ def shutdown_server(ip):
     import rpyc
     c = rpyc.connect(ip, 60000)
     result = c.root.shutdown()
-    c.close()
     if not result['status']:
         raise Exception(message=result['result'])
     return result['status']
@@ -197,6 +196,9 @@ def start_disckless_reload(ip):
     if result.read():
         raise Exception(message=result.read())
     save_machinerecord_log(ip, '更新tgt', ip)
+    service.status=1
+    service.iscsi_status=1
+    service.save()
 
 def start_disckless_backup(service_id):
     service = Service.query.filter_by(id=service_id).first()

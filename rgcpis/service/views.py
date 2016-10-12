@@ -5,7 +5,7 @@ from flask_login import current_app, login_required, current_user
 from flask_login import request
 from rgcpis.service.forms import SearchServiceForm, AddMachineForm
 from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, \
-    service_last_options, start_disckless_reload, shutdown_server, start_disckless_backup
+    service_last_options, start_disckless_reload, shutdown_server, start_disckless_backup, save_machinerecord_log
 from rgcpis.service.models import Service, MachineRecord, ServiceVersion
 from rgcpis.utils.auth import json_response, response_file
 from rgcpis.utils.decorator import check_ipxe_status, api_check_ipxe_status
@@ -105,7 +105,7 @@ def single_service_option(options, service_id):
 
 @service.route('/service_upload/<int:service_id>', methods=["POST"])
 @login_required
-@check_ipxe_status
+# @check_ipxe_status
 def service_upload(service_id):
     import re
     cluster = request.args.get('cluster', 2, type=int)
@@ -160,7 +160,7 @@ def echolog():
 
 @service.route('/renew_services', methods=['POST'])
 @login_required
-@check_ipxe_status
+#@check_ipxe_status
 @csrf.exempt
 def renew_services():
     try:
@@ -186,6 +186,7 @@ def renew_services():
         return redirect(request.referrer)
     except Exception as e:
         flash(u'重装失败', 'danger')
+        save_machinerecord_log(service.ip, e, request.remote_addr)
         current_app.logger.error('error in renew service')
         current_app.logger.error(e)
         return redirect(request.referrer)
@@ -200,8 +201,7 @@ def get_service_status():
         return json_response(1, error_msg='error')
     filename = 'aoe.ipxe'
     if service.status in [2, 4]:
-        record = MachineRecord(service.ip, u'机器引导中', request_ip)
-        record.save()
+        save_machinerecord_log(service.ip, u'机器引导中', request_ip)
         configs = current_app.config['DHCP_NETWORK_START']
     else:
         configs = current_app.config['BOOT_START']
@@ -223,15 +223,14 @@ def service_config_file():
     if service.status in [2, 3]:
         service.status = 3
         service.save()
-        record = MachineRecord(service.ip, u'开始重装系统', request_ip)
-        record.save()
+        save_machinerecord_log(service.ip, u'开始重装系统', request_ip)
         configs = render_template('renew.bat', version=service.version)
         # configs = current_app.config['RENEW_SERVICE'].format(version=service.version)
     elif service.status in [4, 5]:
         service.status = 5
         service.save()
-        record = MachineRecord(service.ip, u'开始备份系统', request_ip)
-        record.save()
+        save_machinerecord_log(service.ip, u'开始备份系统', request_ip)
+
         configs = render_template('upload.bat', version=service.version)
     return response_file(data=configs, filename=filename)
 
@@ -250,8 +249,7 @@ def notification_service_status():
         result = u'系统备份完成,准备开机'
     else:
         result = u'操作完成,准备开机'
-    record = MachineRecord(service.ip, result, option_ip=request_ip)
-    record.save()
+    save_machinerecord_log(service.ip, result, option_ip=request_ip)
     service.status = 6
     service.save()
     return json_response(0)
@@ -276,13 +274,11 @@ def service_start():
 def start_disckless():
     request_ip = request.remote_addr
     try:
-        record = MachineRecord(request_ip, u'开始重装系统', request_ip)
-        record.save()
+        save_machinerecord_log(request_ip, u'开始重装系统', request_ip)
         service = Service.query.filter_by(ip=request_ip).first()
         if service.iscsi_status == 0:
             start_disckless_reload(request_ip)
         return json_response(0)
     except Exception as e:
         current_app.logger.error(e.message)
-        record = MachineRecord(request_ip, 'reload error:' + e.message, request_ip)
-        record.save()
+        save_machinerecord_log(request_ip, 'reload error:' + e.message, request_ip)
