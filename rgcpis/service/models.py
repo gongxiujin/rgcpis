@@ -16,6 +16,8 @@ class Service(db.Model):
     status = db.Column(db.Integer, default=0, nullable=True)  # 0关机  1开机  2重装前引导 3重装中  4备份前引导 5  上传版本中 6 安装完毕重启中
     iscsi_status = db.Column(db.Integer, default=1, nullable=True)
     version_id = db.Column(db.ForeignKey('service_version.id'), nullable=True)
+    old_version = db.relationship('ServiceVersion',  backref=db.backref('service', lazy='dynamic'), uselist=False)
+    old_version_id = db.Column(db.ForeignKey('service_version.id'), nullable=True)
     cluster_id = db.Column(db.Integer(), db.ForeignKey("service_cluster.id"))
     cluster = db.relationship("Cluster", backref=db.backref('cluster', lazy='dynamic'), uselist=False)
     update_ip = db.Column(db.String(15))

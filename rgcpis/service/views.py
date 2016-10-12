@@ -172,6 +172,7 @@ def renew_services():
             service = Service.query.filter_by(id=service_id).first_or_404()
             service = service_last_options(service, request.remote_addr)
             service.status = 2
+            service.old_version_id = service.version_id
             service.version_id = version
             if option == 'now':
                 flash(u'机器正在重装中，请注意日志', 'success')
