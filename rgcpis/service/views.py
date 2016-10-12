@@ -138,12 +138,12 @@ def service_upload(service_id):
             if not mach:
                 flash(u'版本号格式错误', 'danger')
             description = service.ip + '@' + datetime.strftime(datetime.now(), '%Y%m%d%H')
-            service_version = ServiceVersion(version, description, type=2)
-            service_version = service_version.save()
             service = service_last_options(service, request.remote_addr)
             service.version_id = service_version.id
             service = service.save()
-            start_disckless_backup(service_id)
+            start_disckless_backup(service_id, version)
+            service_version = ServiceVersion(version, description, type=2)
+            service_version = service_version.save()
             flash(u'备份母盘成功', 'success')
             return redirect(request.referrer)
         except Exception as e:
