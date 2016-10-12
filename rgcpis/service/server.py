@@ -9,11 +9,14 @@ class StockService(Service):
     def __init__(self, conn):
         super(StockService, self).__init__(conn)
 
+    def on_connect(self):
+        print 'someone connected!'
+
     def exposed_get_time(self):
         return time.ctime()
 
     def exposed_shutdown(self):
-        result = pexpect.spawn('shutdown /s now')
+        result = pexpect.spawn('shutdown -f -r -t 3')
         if not result.read():
             return {'status': True}
         else:

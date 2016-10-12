@@ -162,6 +162,7 @@ def shutdown_server(ip):
     import rpyc
     c = rpyc.connect(ip, 60000)
     result = c.root.shutdown()
+    c.close()
     if not result['status']:
         raise Exception(message=result['result'])
     return result['status']
