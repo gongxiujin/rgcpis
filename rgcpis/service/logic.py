@@ -42,8 +42,12 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
                 result_guide = guide.read()
                 guide_record = MachineRecord(ip_dict['real_ip'], result_guide, option_ip)
                 guide_record.save()
-            ssh_add = 'ipmitool -H {IPA} -U USERID -P PASSW0RD -I lanplus chassis power {option}'.format(
+            if ip_dict['real_ip'].split('.')[1]=='17':
+                ssh_add = 'ipmitool -H {IPA} -U root -P root -I lanplus chassis power {option}'.format(
                 IPA=ip_dict['ipmi_ip'], option=option)
+            else:
+                ssh_add = 'ipmitool -H {IPA} -U USERID -P PASSW0RD -I lanplus chassis power {option}'.format(
+                    IPA=ip_dict['ipmi_ip'], option=option)
             chile = pexpect.spawn(ssh_add)
             while chile.isalive():
                 time.sleep(1)
@@ -168,6 +172,19 @@ def shutdown_server(ip):
 
 
 def start_disckless_reload(ip):
+    while True:
+        result = pexpect.spawn('ipmitool -H {} -U root -P root chassis power status'.format(ip))
+        while result.isalive():
+            time.sleep(1)
+        r = result.read()
+        status = r.strip().split(' ')[-1]
+        if status in ['off', 'on']:
+            if status == 'on':
+                time.sleep(3)
+            else:
+                break
+        else:
+            raise Exception(message=r)
     service = Service.query.filter_by(ip=ip).first()
     disconnect = 'tgt-admin --delete iqn.2016-08.renderg.com:{}'.format(ip)
     result = pexpect.spawn(disconnect)

@@ -31,10 +31,13 @@
       <column name="version_id" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
       <column name="cluster_id" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
       <column name="iscsi_status" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
+      <column name="old_version_id" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
       <primary-key name="PRIMARY" columns="id"/>
       <foreign-key name="service_ibfk_1" columns="version_id" ref-table="service_version" ref-schema="" ref-catalog="cpis_db" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
       <foreign-key name="service_ibfk_2" columns="cluster_id" ref-table="service_cluster" ref-schema="" ref-catalog="cpis_db" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
+      <foreign-key name="service_ibfk_3" columns="old_version_id" ref-table="service_version" ref-schema="" ref-catalog="cpis_db" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
       <index name="ix_service_ip" unique="false" columns="ip"/>
+      <index name="service_ibfk_3" unique="false" columns="old_version_id"/>
     </table>
     <table name="service_cluster" schema="" catalog="cpis_db" type="TABLE">
       <column name="id" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
@@ -53,6 +56,7 @@
       <column name="type" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
       <primary-key name="PRIMARY" columns="id"/>
       <exported-key name="service_ibfk_1" table="service" schema="" catalog="cpis_db" columns="version_id"/>
+      <exported-key name="service_ibfk_3" table="service" schema="" catalog="cpis_db" columns="old_version_id"/>
       <index name="version" unique="true" columns="version"/>
     </table>
     <table name="users" schema="" catalog="cpis_db" type="TABLE">
