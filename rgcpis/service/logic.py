@@ -174,7 +174,7 @@ def start_disckless_reload(ip):
     if result.read():
         raise Exception(message=result.read())
     save_machinerecord_log(ip, '停止映射', ip)
-    delete_disck = 'zfs destroy storage/vh{}_{}'.format(service.version, ip)
+    delete_disck = 'zfs destroy storage/vh{}_{}'.format(service.old_version.version, ip)
     clone_disck = 'zfs clone storage/vh{version}_{description} storage/vh{version}_{ip}'.format(
         version=service.version, description=service.version_description, ip=ip)
     result = pexpect.spawn(delete_disck)
@@ -199,6 +199,7 @@ def start_disckless_reload(ip):
     service.status = 1
     service.iscsi_status = 1
     service.save()
+    ssh_machine_shell(service.ip, option='on', option_ip=service.ip)
 
 
 def start_disckless_backup(version_id, old_service):

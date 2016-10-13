@@ -169,14 +169,15 @@ def renew_services():
             service = Service.query.filter_by(id=service_id).first_or_404()
             service = service_last_options(service, request.remote_addr)
             service.status = 2
-            # service.old_version_id = service.version_id
-            service.version_id = version
             if option == 'now':
                 flash(u'机器正在重装中，请注意日志', 'success')
                 if cluster == 1:
+                    service.old_version_id = service.version_id
+                    service.version_id = version
                     service.iscsi_status = 0
                     shutdown_server(service.ip)
                 else:
+                    service.version_id = version
                     ssh_machine_shell(service.ip, option='reset', option_ip=request.remote_addr)
             else:
                 flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
