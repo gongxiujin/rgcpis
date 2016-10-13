@@ -12,6 +12,7 @@ IPMI_OFFSET = 8
 
 STATUS = {1: 'on', 2: 'soft', 3: 'on'}
 
+
 class GeneralError(Exception):
     def __init__(self, value, description):
         self.value = value
@@ -23,6 +24,7 @@ class GeneralError(Exception):
     def __str__(self):
         return "<{} {}：{}>".format(self.__class__.__name__, self.value, self.description)
 
+
 class NotExisted(GeneralError):
     def __init__(self, error_code='error', description=''):
         super(NotExisted, self).__init__(error_code, description)
@@ -32,6 +34,8 @@ class NotExisted(GeneralError):
 
     def __str__(self):
         super(NotExisted, self).__str__()
+
+
 def validate_ipaddress(startip, endip):
     startre = re.match(IPADDRESS_RE, startip)
     endre = re.match(IPADDRESS_RE, endip)
@@ -50,29 +54,37 @@ def validate_ipaddress(startip, endip):
 
 def thread_ssh(formt_ipmiip, option, option_ip=None):
     from manage import app
+    IPMI_SECRET = {'17': {'username': 'root', 'password': 'root'}, '20': {'username': 'USERID', 'password': 'PASSW0RD'}}
     with app.app_context():
+        results = []
         for ip_dict in formt_ipmiip:
+            ips = ip_dict['real_ip'].split('.')[1]
             if option != 'soft':
-                ipmi_guide = "ipmitool  -H {IPA} -U USERID -P PASSW0RD -I lanplus chassis bootdev pxe".format(
-                    IPA=ip_dict['ipmi_ip'])
+                ipmi_guide = "ipmitool  -H {IPA} -U {username} -P {password} -I lanplus chassis bootdev pxe".format(
+                    IPA=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'],
+                    password=IPMI_SECRET[ips]['password'])
                 guide = pexpect.spawn(ipmi_guide)
                 while guide.isalive():
                     time.sleep(1)
                 result_guide = guide.read()
                 guide_record = MachineRecord(ip_dict['real_ip'], result_guide, option_ip)
                 guide_record.save()
-            if ip_dict['real_ip'].split('.')[1]=='17':
-                ssh_add = 'ipmitool -H {IPA} -U root -P root -I lanplus chassis power {option}'.format(
-                IPA=ip_dict['ipmi_ip'], option=option)
+            elif option == 'status':
+                ssh_add = 'ipmitool -H {ip} -U {username} -P {password} chassis power {option}'.format(
+                    ip=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'], password=IPMI_SECRET[ips]['password'])
             else:
-                ssh_add = 'ipmitool -H {IPA} -U USERID -P PASSW0RD -I lanplus chassis power {option}'.format(
-                    IPA=ip_dict['ipmi_ip'], option=option)
+                ssh_add = 'ipmitool -H {IPA} -U {username} -P {password} -I lanplus chassis power {option}'.format(
+                    IPA=ip_dict['ipmi_ip'], option=option, username=IPMI_SECRET[ips]['username'],
+                    password=IPMI_SECRET[ips]['password'])
             chile = pexpect.spawn(ssh_add)
             while chile.isalive():
                 time.sleep(1)
             result = chile.read()
             record = MachineRecord(ip_dict['real_ip'], result, option_ip)
             record.save()
+            results.append(result)
+        return results
+
 
 
 def ssh_machine_shell(starts, ends=None, option=None, option_ip=None):
@@ -189,12 +201,10 @@ def shutdown_server(ip):
         raise NotExisted(description=result['result'])
     return result['status']
 
+
 def check_service_status(ip):
     while True:
-        result = pexpect.spawn('ipmitool -H {} -U root -P root chassis power status'.format(ip))
-        while result.isalive():
-            time.sleep(1)
-        r = result.read()
+        r = ssh_machine_shell(ip, option='status')[0]
         status = r.strip().split(' ')[-1]
         if status in ['off', 'on']:
             if status == 'on':
@@ -203,6 +213,7 @@ def check_service_status(ip):
                 break
         else:
             raise NotExisted(description=r)
+
 
 def start_disckless_reload(ip):
     check_service_status(ip)
