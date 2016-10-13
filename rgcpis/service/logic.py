@@ -86,7 +86,9 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
             results.append(result)
         return results
 
-
+def thread_format_ip(ip):
+    service = Service.query.filter_by(ip=ip).first()
+    return {'real_ip': ip, 'ipmi_ip': service.get_ipmiip()}
 
 def ssh_machine_shell(starts, ends=None, option=None, option_ip=None):
     ips = []
@@ -205,7 +207,9 @@ def shutdown_server(ip):
 
 def check_service_status(ip):
     while True:
-        r = ssh_machine_shell(ip, option='status')[0]
+        ipmat = thread_format_ip(ip)
+        r = thread_ssh(ipmat, option='status')[0]
+        # r = ssh_machine_shell(ip, option='status')[0]
         status = r.strip().split(' ')[-1]
         if status in ['off', 'on']:
             if status == 'on':
