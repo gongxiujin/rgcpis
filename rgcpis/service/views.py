@@ -134,21 +134,21 @@ def service_upload(service_id):
             return redirect(request.referrer)
         return redirect(request.referrer)
     elif cluster == 1:
-        try:
-            from datetime import datetime
-            description = service.ip + '@' + datetime.strftime(datetime.now(), '%Y%m%d%H')
-            service = service_last_options(service, request.remote_addr)
-            service_version = ServiceVersion(version, description, type=2)
-            service_version = service_version.save()
-            start_disckless_backup(service_version.id, service)
-            service.version_id = service_version.id
-            service.save()
-            flash(u'备份母盘成功', 'success')
-            return redirect(request.referrer)
-        except NotExisted as ne:
-            current_app.logger.error(ne.description)
-            flash('error:' + ne.description, 'danger')
-            return redirect(request.referrer)
+        # try:
+        from datetime import datetime
+        description = service.ip + '@' + datetime.strftime(datetime.now(), '%Y%m%d%H')
+        service = service_last_options(service, request.remote_addr)
+        service_version = ServiceVersion(version, description, type=2)
+        service_version = service_version.save()
+        start_disckless_backup(service_version.id, service)
+        service.version_id = service_version.id
+        service.save()
+        flash(u'备份母盘成功', 'success')
+        return redirect(request.referrer)
+        # except NotExisted as ne:
+        #     current_app.logger.error(ne.description)
+        #     flash('error:' + ne.description, 'danger')
+        #     return redirect(request.referrer)
         # except Exception as e:
         #     current_app.logger.error(e.message)
         #     flash('error:' + e.message, 'danger')

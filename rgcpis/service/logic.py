@@ -208,7 +208,7 @@ def shutdown_server(ip):
 def check_service_status(ip):
     while True:
         ipmat = thread_format_ip(ip)
-        r = thread_ssh(ipmat, option='status')[0]
+        r = thread_ssh([ipmat], option='status')[0]
         # r = ssh_machine_shell(ip, option='status')[0]
         status = r.strip().split(' ')[-1]
         if status in ['off', 'on']:
