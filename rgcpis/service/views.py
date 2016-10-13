@@ -5,7 +5,8 @@ from flask_login import current_app, login_required, current_user
 from flask_login import request
 from rgcpis.service.forms import SearchServiceForm, AddMachineForm
 from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, \
-    service_last_options, start_disckless_reload, shutdown_server, start_disckless_backup, save_machinerecord_log
+    service_last_options, start_disckless_reload, shutdown_server, start_disckless_backup, save_machinerecord_log, \
+    NotExisted
 from rgcpis.service.models import Service, MachineRecord, ServiceVersion
 from rgcpis.utils.auth import json_response, response_file
 from rgcpis.utils.decorator import check_ipxe_status, api_check_ipxe_status
@@ -116,6 +117,7 @@ def service_upload(service_id):
         flash(u'版本号格式错误', 'danger')
     description = request.form.get("description")
     service_version = ServiceVersion.query.filter_by(version=version).first()
+    cluster = service.cluster_id
     if service_version:
         flash(u'版本号已存在', 'danger')
         return redirect(request.referrer)
@@ -142,6 +144,10 @@ def service_upload(service_id):
             service.version_id = service_version.id
             service.save()
             flash(u'备份母盘成功', 'success')
+            return redirect(request.referrer)
+        except NotExisted as ne:
+            current_app.logger.error(ne.description)
+            flash('error:' + ne.description, 'danger')
             return redirect(request.referrer)
         except Exception as e:
             current_app.logger.error(e.message)
@@ -182,6 +188,12 @@ def renew_services():
             else:
                 flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
             service = service.save()
+        return redirect(request.referrer)
+    except NotExisted as ne:
+        flash(u'重装失败', 'danger')
+        save_machinerecord_log(service.ip, ne.description, request.remote_addr)
+        current_app.logger.error('error in renew service')
+        current_app.logger.error(ne.description)
         return redirect(request.referrer)
     except Exception as e:
         flash(u'重装失败', 'danger')
@@ -278,6 +290,9 @@ def start_disckless():
         if service.iscsi_status == 0:
             start_disckless_reload(request_ip)
         return json_response(0)
+    except NotExisted as ne:
+        current_app.logger.error(ne.description)
+        save_machinerecord_log(request_ip, 'reload error:' + ne.description, request_ip)
     except Exception as e:
         current_app.logger.error(e.message)
         save_machinerecord_log(request_ip, 'reload error:' + e.message, request_ip)

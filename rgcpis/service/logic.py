@@ -12,7 +12,26 @@ IPMI_OFFSET = 8
 
 STATUS = {1: 'on', 2: 'soft', 3: 'on'}
 
+class GeneralError(Exception):
+    def __init__(self, value, description):
+        self.value = value
+        self.description = description
 
+    def __repr__(self):
+        return "<{} {}：{}>".format(self.__class__.__name__, self.value, self.description)
+
+    def __str__(self):
+        return "<{} {}：{}>".format(self.__class__.__name__, self.value, self.description)
+
+class NotExisted(GeneralError):
+    def __init__(self, error_code='error', description=''):
+        super(NotExisted, self).__init__(error_code, description)
+
+    def __repr__(self):
+        super(NotExisted, self).__repr__()
+
+    def __str__(self):
+        super(NotExisted, self).__str__()
 def validate_ipaddress(startip, endip):
     startre = re.match(IPADDRESS_RE, startip)
     endre = re.match(IPADDRESS_RE, endip)
@@ -167,11 +186,10 @@ def shutdown_server(ip):
     c = rpyc.connect(ip, 60000)
     result = c.root.shutdown()
     if not result['status']:
-        raise Exception(message=result['result'])
+        raise NotExisted(description=result['result'])
     return result['status']
 
-
-def start_disckless_reload(ip):
+def check_service_status(ip):
     while True:
         result = pexpect.spawn('ipmitool -H {} -U root -P root chassis power status'.format(ip))
         while result.isalive():
@@ -184,23 +202,26 @@ def start_disckless_reload(ip):
             else:
                 break
         else:
-            raise Exception(message=r)
+            raise NotExisted(description=r)
+
+def start_disckless_reload(ip):
+    check_service_status(ip)
     service = Service.query.filter_by(ip=ip).first()
     disconnect = 'tgt-admin --delete iqn.2016-08.renderg.com:{}'.format(ip)
     result = pexpect.spawn(disconnect)
     if result.read():
-        raise Exception(message=result.read())
+        raise NotExisted(description=result.read())
     save_machinerecord_log(ip, '停止映射', ip)
     delete_disck = 'zfs destroy storage/vh{}_{}'.format(service.old_version.version, ip)
     clone_disck = 'zfs clone storage/vh{version}_{description} storage/vh{version}_{ip}'.format(
         version=service.version, description=service.version_description, ip=ip)
     result = pexpect.spawn(delete_disck)
     if result.read():
-        raise Exception(message=result.read())
+        raise NotExisted(description=result.read())
     save_machinerecord_log(ip, '更新ZFS:删除原有卷', ip)
     result = pexpect.spawn(clone_disck)
     if result.read():
-        raise Exception(message=result.read())
+        raise NotExisted(description=result.read())
     save_machinerecord_log(ip, '更新ZFS:克隆新卷', ip)
     tgt_conf = '''<target iqn.2016-08.renderg.com:{ip}>\rbacking-store /dev/storage/vh{version}_{ip}\r</target>'''.format(
         ip=ip, version=service.version)
@@ -211,7 +232,7 @@ def start_disckless_reload(ip):
     update_tgt = 'tgt-admin --update iqn.2016-08.renderg.com:{}'.format(ip)
     result = pexpect.spawn(update_tgt)
     if result.read():
-        raise Exception(message=result.read())
+        raise NotExisted(description=result.read())
     save_machinerecord_log(ip, '更新tgt', ip)
     service.status = 1
     service.iscsi_status = 1
@@ -220,6 +241,8 @@ def start_disckless_reload(ip):
 
 
 def start_disckless_backup(version_id, old_service):
+    shutdown_server(old_service.ip)
+    check_service_status(old_service.ip)
     version = ServiceVersion.query.filter_by(id=version_id).first()
     ssh = 'zfs clone storage/vh{version}_{description} storage/vh{new_version}_{ip}'.format(version=old_service.version,
                                                                                             description=old_service.version_description,
@@ -227,8 +250,8 @@ def start_disckless_backup(version_id, old_service):
                                                                                             ip=old_service.ip)
     result = pexpect.spawn(ssh)
     if result.read():
-        raise Exception(message=result.read())
+        raise NotExisted(description=result.read())
     ssh = 'zfs snapshot storage/vh{}_{}'.format(version.version, version.version_description)
     result = pexpect.spawn(ssh)
     if result.read():
-        raise Exception(message=result.read())
+        raise NotExisted(description=result.read())
