@@ -255,3 +255,4 @@ def start_disckless_backup(version_id, old_service):
     result = pexpect.spawn(ssh)
     if result.read():
         raise NotExisted(description=result.read())
+    ssh_machine_shell(old_service.ip, option='on', option_ip=old_service.ip)
