@@ -66,22 +66,23 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
                 guide = pexpect.spawn(ipmi_guide)
                 while guide.isalive():
                     time.sleep(1)
-                result_guide = guide.read()
-                guide_record = MachineRecord(ip_dict['real_ip'], result_guide, option_ip)
+                result = guide.read()
+                guide_record = MachineRecord(ip_dict['real_ip'], result, option_ip)
                 guide_record.save()
-            elif option == 'status':
-                ssh_add = 'ipmitool -H {ip} -U {username} -P {password} chassis power {option}'.format(
-                    ip=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'], password=IPMI_SECRET[ips]['password'])
             else:
-                ssh_add = 'ipmitool -H {IPA} -U {username} -P {password} -I lanplus chassis power {option}'.format(
-                    IPA=ip_dict['ipmi_ip'], option=option, username=IPMI_SECRET[ips]['username'],
-                    password=IPMI_SECRET[ips]['password'])
-            chile = pexpect.spawn(ssh_add)
-            while chile.isalive():
-                time.sleep(1)
-            result = chile.read()
-            record = MachineRecord(ip_dict['real_ip'], result, option_ip)
-            record.save()
+                if option == 'status':
+                    ssh_add = 'ipmitool -H {ip} -U {username} -P {password} chassis power {option}'.format(
+                        ip=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'], password=IPMI_SECRET[ips]['password'])
+                else:
+                    ssh_add = 'ipmitool -H {IPA} -U {username} -P {password} -I lanplus chassis power {option}'.format(
+                        IPA=ip_dict['ipmi_ip'], option=option, username=IPMI_SECRET[ips]['username'],
+                        password=IPMI_SECRET[ips]['password'])
+                chile = pexpect.spawn(ssh_add)
+                while chile.isalive():
+                    time.sleep(1)
+                result = chile.read()
+                record = MachineRecord(ip_dict['real_ip'], result, option_ip)
+                record.save()
             results.append(result)
         return results
 

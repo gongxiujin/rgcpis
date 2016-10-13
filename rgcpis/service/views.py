@@ -149,10 +149,10 @@ def service_upload(service_id):
             current_app.logger.error(ne.description)
             flash('error:' + ne.description, 'danger')
             return redirect(request.referrer)
-        except Exception as e:
-            current_app.logger.error(e.message)
-            flash('error:' + e.message, 'danger')
-            return redirect(request.referrer)
+        # except Exception as e:
+        #     current_app.logger.error(e.message)
+        #     flash('error:' + e.message, 'danger')
+        #     return redirect(request.referrer)
 
 
 @service.route('/echo_machine_record')
