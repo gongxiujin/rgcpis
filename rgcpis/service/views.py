@@ -141,8 +141,9 @@ def service_upload(service_id):
         service_version = ServiceVersion(version, description, type=2)
         service_version.save()
         service.iscsi_status = 2
+        service.new_version_id = service_version.id
         service.save()
-        start_disckless_backup(service, service_version)
+        shutdown_server(service.ip)
         flash(u'备份母盘成功', 'success')
         return redirect(request.referrer)
         # except NotExisted as ne:
@@ -178,8 +179,7 @@ def renew_services():
         if option == 'now':
             flash(u'机器正在重装中，请注意日志', 'success')
             if cluster == 1:
-                service.new_version_id = service
-                service.version_id = version
+                service.new_version_id = version
                 service.iscsi_status = 0
                 shutdown_server(service.ip)
             else:
@@ -292,6 +292,8 @@ def start_disckless():
     elif service.iscsi_status == 1:
         version = ServiceVersion.query.filter_by(id=service.version_id).first()
         start_disckless_reload(service, 'reboot', version)
+    elif service.iscsi_status == 2:
+        start_disckless_reload(service, 'upload', service.new_version)
     return json_response(0)
     # except NotExisted as ne:
     #     current_app.logger.error(ne.description)
