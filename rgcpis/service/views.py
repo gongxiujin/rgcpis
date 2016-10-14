@@ -139,7 +139,7 @@ def service_upload(service_id):
         description = "vh{version}_{ip}@{date}".format(version=service.version, ip=service.ip, date=datetime.strftime(datetime.now(), '%Y%m%d%H'))
         service = service_last_options(service, request.remote_addr)
         service_version = ServiceVersion(version, description, type=2)
-        service_version = service_version.save()
+        service_version.save()
         service.iscsi_status = 2
         service = service.save()
         start_disckless_backup(service, service_version)

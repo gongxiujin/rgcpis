@@ -70,8 +70,6 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
                 while chile.isalive():
                     time.sleep(1)
                 result = chile.read()
-                record = MachineRecord(ip_dict['real_ip'], result, option_ip)
-                record.save()
             else:
                 if option != 'soft':
                     ipmi_guide = "ipmitool  -H {IPA} -U {username} -P {password} -I lanplus chassis bootdev pxe".format(
@@ -82,8 +80,6 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
                     while guide.isalive():
                         time.sleep(1)
                     result = guide.read()
-                    guide_record = MachineRecord(ip_dict['real_ip'], result, option_ip)
-                    guide_record.save()
                 ssh_add = 'ipmitool -H {IPA} -U {username} -P {password} -I lanplus chassis power {option}'.format(
                     IPA=ip_dict['ipmi_ip'], option=option, username=IPMI_SECRET[ips]['username'],
                     password=IPMI_SECRET[ips]['password'])
@@ -92,8 +88,6 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
                 while chile.isalive():
                     time.sleep(1)
                 result = chile.read()
-                record = MachineRecord(ip_dict['real_ip'], result, option_ip)
-                record.save()
             results.append(result)
         return results
 
