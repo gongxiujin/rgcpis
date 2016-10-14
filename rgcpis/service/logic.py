@@ -231,7 +231,7 @@ def zfx_without_result(ssh):
 
 
 def start_disckless_reload(service, operation, version):
-    thread = Thread(target=start_disckless_reload, args=(service, operation, version))
+    thread = Thread(target=disckless_operation, args=(service, operation, version))
     thread.start()
 
 

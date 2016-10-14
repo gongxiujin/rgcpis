@@ -1,3 +1,5 @@
+{% extends "auth/index.html" %}
+{% block content %}
 <div class="col-md-3">
 {% for record in records %}
 {% if record.result %}
@@ -5,3 +7,4 @@
 {% endif %}
 {% endfor %}
 </div>
+{% endblock %}
