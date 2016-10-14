@@ -140,6 +140,8 @@ def service_upload(service_id):
         service = service_last_options(service, request.remote_addr)
         service_version = ServiceVersion(version, description, type=2)
         service_version = service_version.save()
+        service.iscsi_status = 2
+        service = service.save()
         start_disckless_backup(service, service_version)
         flash(u'备份母盘成功', 'success')
         return redirect(request.referrer)
@@ -287,7 +289,7 @@ def start_disckless():
     service = Service.query.filter_by(ip=request_ip).first()
     if service.iscsi_status == 0:
         start_disckless_reload(service, 'upgrade', service.new_version)
-    else:
+    elif service.iscsi_status == 1:
         version = ServiceVersion.query.filter_by(id=service.version_id).first()
         start_disckless_reload(service, 'reboot', version)
     return json_response(0)
