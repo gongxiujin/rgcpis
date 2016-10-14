@@ -58,6 +58,7 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
     with app.app_context():
         results = []
         for ip_dict in formt_ipmiip:
+            print ip_dict
             ips = ip_dict['real_ip'].split('.')[1]
             if option != 'soft':
                 ipmi_guide = "ipmitool  -H {IPA} -U {username} -P {password} -I lanplus chassis bootdev pxe".format(
@@ -72,7 +73,8 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
             else:
                 if option == 'status':
                     ssh_add = 'ipmitool -H {ip} -U {username} -P {password} chassis power {option}'.format(
-                        ip=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'], password=IPMI_SECRET[ips]['password'])
+                        ip=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'],
+                        password=IPMI_SECRET[ips]['password'])
                 else:
                     ssh_add = 'ipmitool -H {IPA} -U {username} -P {password} -I lanplus chassis power {option}'.format(
                         IPA=ip_dict['ipmi_ip'], option=option, username=IPMI_SECRET[ips]['username'],
@@ -86,9 +88,11 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
             results.append(result)
         return results
 
+
 def thread_format_ip(ip):
     service = Service.query.filter_by(ip=ip).first()
     return {'real_ip': ip, 'ipmi_ip': service.get_ipmiip()}
+
 
 def ssh_machine_shell(starts, ends=None, option=None, option_ip=None):
     ips = []
@@ -209,6 +213,8 @@ def check_service_status(ip):
     while True:
         ipmat = thread_format_ip(ip)
         r = thread_ssh([ipmat], option='status')[0]
+        current_app.logger.error(r)
+        print r
         # r = ssh_machine_shell(ip, option='status')[0]
         status = r.strip().split(' ')[-1]
         if status in ['off', 'on']:
@@ -216,8 +222,6 @@ def check_service_status(ip):
                 time.sleep(3)
             else:
                 break
-        else:
-            raise NotExisted(description=r)
 
 
 def start_disckless_reload(ip):
@@ -255,8 +259,7 @@ def start_disckless_reload(ip):
     service.save()
     ssh_machine_shell(service.ip, option='on', option_ip=service.ip)
 
-
-def start_disckless_backup(version_id, old_service):
+def disckless_backup(old_service, version_id):
     shutdown_server(old_service.ip)
     check_service_status(old_service.ip)
     version = ServiceVersion.query.filter_by(id=version_id).first()
@@ -271,4 +274,10 @@ def start_disckless_backup(version_id, old_service):
     result = pexpect.spawn(ssh)
     if result.read():
         raise NotExisted(description=result.read())
+    old_service.status=6
     ssh_machine_shell(old_service.ip, option='on', option_ip=old_service.ip)
+
+
+def start_disckless_backup(version_id, old_service):
+    thread = Thread(target=disckless_backup, args=(old_service, version_id))
+    thread.start()

@@ -284,15 +284,15 @@ def service_start():
 @service.route("/start_disckless/")
 def start_disckless():
     request_ip = request.remote_addr
-    try:
-        save_machinerecord_log(request_ip, u'开始重装系统', request_ip)
-        service = Service.query.filter_by(ip=request_ip).first()
-        if service.iscsi_status == 0:
-            start_disckless_reload(request_ip)
-        return json_response(0)
-    except NotExisted as ne:
-        current_app.logger.error(ne.description)
-        save_machinerecord_log(request_ip, 'reload error:' + ne.description, request_ip)
-    except Exception as e:
-        current_app.logger.error(e.message)
-        save_machinerecord_log(request_ip, 'reload error:' + e.message, request_ip)
+    # try:
+    save_machinerecord_log(request_ip, u'开始重装系统', request_ip)
+    service = Service.query.filter_by(ip=request_ip).first()
+    if service.iscsi_status == 0:
+        start_disckless_reload(request_ip)
+    return json_response(0)
+    # except NotExisted as ne:
+    #     current_app.logger.error(ne.description)
+    #     save_machinerecord_log(request_ip, 'reload error:' + ne.description, request_ip)
+    # except Exception as e:
+    #     current_app.logger.error(e.message)
+    #     save_machinerecord_log(request_ip, 'reload error:' + e.message, request_ip)
