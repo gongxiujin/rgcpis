@@ -58,14 +58,12 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
     with app.app_context():
         results = []
         for ip_dict in formt_ipmiip:
-            print ip_dict
             ips = ip_dict['real_ip'].split('.')[1]
 
             if ips=='17':
                 ssh_add = 'ipmitool -H {ip} -U {username} -P {password} chassis power {option}'.format(
                     ip=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'],
                     password=IPMI_SECRET[ips]['password'], option=option)
-                print ssh_add
                 chile = pexpect.spawn(ssh_add)
                 while chile.isalive():
                     time.sleep(1)
@@ -75,7 +73,6 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
                     ipmi_guide = "ipmitool  -H {IPA} -U {username} -P {password} -I lanplus chassis bootdev pxe".format(
                         IPA=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'],
                         password=IPMI_SECRET[ips]['password'])
-                    print ipmi_guide
                     guide = pexpect.spawn(ipmi_guide)
                     while guide.isalive():
                         time.sleep(1)
@@ -216,8 +213,6 @@ def check_service_off(ip):
     while True:
         ipmat = thread_format_ip(ip)
         r = thread_ssh([ipmat], option='status')[0]
-        current_app.logger.error(r)
-        print r
         # r = ssh_machine_shell(ip, option='status')[0]
         status = r.strip().split(' ')[-1]
         if status in ['off', 'on']:
@@ -228,6 +223,7 @@ def check_service_off(ip):
 
 
 def zfx_without_result(ssh):
+    print ssh
     result = pexpect.spawn(ssh)
     if result.read():
         raise NotExisted(description=result.read())
