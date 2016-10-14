@@ -60,26 +60,33 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
         for ip_dict in formt_ipmiip:
             print ip_dict
             ips = ip_dict['real_ip'].split('.')[1]
-            if option != 'soft':
-                ipmi_guide = "ipmitool  -H {IPA} -U {username} -P {password} -I lanplus chassis bootdev pxe".format(
-                    IPA=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'],
-                    password=IPMI_SECRET[ips]['password'])
-                print ipmi_guide
-                guide = pexpect.spawn(ipmi_guide)
-                while guide.isalive():
+
+            if ips=='17':
+                ssh_add = 'ipmitool -H {ip} -U {username} -P {password} chassis power {option}'.format(
+                    ip=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'],
+                    password=IPMI_SECRET[ips]['password'], option=option)
+                print ssh_add
+                chile = pexpect.spawn(ssh_add)
+                while chile.isalive():
                     time.sleep(1)
-                result = guide.read()
-                guide_record = MachineRecord(ip_dict['real_ip'], result, option_ip)
-                guide_record.save()
+                result = chile.read()
+                record = MachineRecord(ip_dict['real_ip'], result, option_ip)
+                record.save()
             else:
-                if option == 'status':
-                    ssh_add = 'ipmitool -H {ip} -U {username} -P {password} chassis power {option}'.format(
-                        ip=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'],
-                        password=IPMI_SECRET[ips]['password'], option=option)
-                else:
-                    ssh_add = 'ipmitool -H {IPA} -U {username} -P {password} -I lanplus chassis power {option}'.format(
-                        IPA=ip_dict['ipmi_ip'], option=option, username=IPMI_SECRET[ips]['username'],
+                if option != 'soft':
+                    ipmi_guide = "ipmitool  -H {IPA} -U {username} -P {password} -I lanplus chassis bootdev pxe".format(
+                        IPA=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'],
                         password=IPMI_SECRET[ips]['password'])
+                    print ipmi_guide
+                    guide = pexpect.spawn(ipmi_guide)
+                    while guide.isalive():
+                        time.sleep(1)
+                    result = guide.read()
+                    guide_record = MachineRecord(ip_dict['real_ip'], result, option_ip)
+                    guide_record.save()
+                ssh_add = 'ipmitool -H {IPA} -U {username} -P {password} -I lanplus chassis power {option}'.format(
+                    IPA=ip_dict['ipmi_ip'], option=option, username=IPMI_SECRET[ips]['username'],
+                    password=IPMI_SECRET[ips]['password'])
                 print ssh_add
                 chile = pexpect.spawn(ssh_add)
                 while chile.isalive():
