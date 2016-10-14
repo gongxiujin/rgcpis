@@ -64,6 +64,7 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
                 ipmi_guide = "ipmitool  -H {IPA} -U {username} -P {password} -I lanplus chassis bootdev pxe".format(
                     IPA=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'],
                     password=IPMI_SECRET[ips]['password'])
+                print ipmi_guide
                 guide = pexpect.spawn(ipmi_guide)
                 while guide.isalive():
                     time.sleep(1)
@@ -79,6 +80,7 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
                     ssh_add = 'ipmitool -H {IPA} -U {username} -P {password} -I lanplus chassis power {option}'.format(
                         IPA=ip_dict['ipmi_ip'], option=option, username=IPMI_SECRET[ips]['username'],
                         password=IPMI_SECRET[ips]['password'])
+                print ssh_add
                 chile = pexpect.spawn(ssh_add)
                 while chile.isalive():
                     time.sleep(1)
@@ -237,7 +239,7 @@ def start_disckless_reload(service, operation, version):
 
 def disckless_operation(service, operation, version):
     from manage import app
-    with app.app_context:
+    with app.app_context():
         check_service_off(service.ip)
         zfx_without_result('tgt-admin --delete iqn.2016-08.renderg.com:{}'.format(service.ip))
         save_machinerecord_log(service.ip, '停止映射成功', service.ip)
@@ -289,4 +291,5 @@ def disckless_operation(service, operation, version):
 
 
 def start_disckless_backup(service, version):
+    shutdown_server(service.ip)
     start_disckless_reload(service, 'upload', version)
