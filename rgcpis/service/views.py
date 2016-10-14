@@ -166,41 +166,41 @@ def echolog():
 #@check_ipxe_status
 @csrf.exempt
 def renew_services():
-    try:
-        cluster = request.args.get('cluster', 2, type=int)
-        version = request.form.get('version', type=int)
-        option = request.form.get('option')
-        ids = request.form.getlist('service_id', type=int)
-        for service_id in ids:
-            service = Service.query.filter_by(id=service_id).first_or_404()
-            service = service_last_options(service, request.remote_addr)
-            service.status = 2
-            if option == 'now':
-                flash(u'机器正在重装中，请注意日志', 'success')
-                if cluster == 1:
-                    service.old_version_id = service.version_id
-                    service.version_id = version
-                    service.iscsi_status = 0
-                    shutdown_server(service.ip)
-                else:
-                    service.version_id = version
-                    ssh_machine_shell(service.ip, option='reset', option_ip=request.remote_addr)
+    # try:
+    cluster = request.args.get('cluster', 2, type=int)
+    version = request.form.get('version', type=int)
+    option = request.form.get('option')
+    ids = request.form.getlist('service_id', type=int)
+    for service_id in ids:
+        service = Service.query.filter_by(id=service_id).first_or_404()
+        service = service_last_options(service, request.remote_addr)
+        service.status = 2
+        if option == 'now':
+            flash(u'机器正在重装中，请注意日志', 'success')
+            if cluster == 1:
+                service.old_version_id = service.version_id
+                service.version_id = version
+                service.iscsi_status = 0
+                shutdown_server(service.ip)
             else:
-                flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
-            service = service.save()
+                service.version_id = version
+                ssh_machine_shell(service.ip, option='reset', option_ip=request.remote_addr)
+        else:
+            flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
+        service = service.save()
         return redirect(request.referrer)
-    except NotExisted as ne:
-        flash(u'重装失败', 'danger')
-        save_machinerecord_log(service.ip, ne.description, request.remote_addr)
-        current_app.logger.error('error in renew service')
-        current_app.logger.error(ne.description)
-        return redirect(request.referrer)
-    except Exception as e:
-        flash(u'重装失败', 'danger')
-        save_machinerecord_log(service.ip, e, request.remote_addr)
-        current_app.logger.error('error in renew service')
-        current_app.logger.error(e)
-        return redirect(request.referrer)
+    # except NotExisted as ne:
+    #     flash(u'重装失败', 'danger')
+    #     save_machinerecord_log(service.ip, ne.description, request.remote_addr)
+    #     current_app.logger.error('error in renew service')
+    #     current_app.logger.error(ne.description)
+    #     return redirect(request.referrer)
+    # except Exception as e:
+    #     flash(u'重装失败', 'danger')
+    #     save_machinerecord_log(service.ip, e, request.remote_addr)
+    #     current_app.logger.error('error in renew service')
+    #     current_app.logger.error(e)
+    #     return redirect(request.referrer)
 
 
 @service.route("/check_start_status/aoe.ipxe")
