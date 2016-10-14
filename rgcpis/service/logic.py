@@ -262,6 +262,7 @@ def disckless_operation(service, operation, version):
     save_machinerecord_log(service.ip, '更新tgt成功', service.ip)
     service.status = 1
     service.iscsi_status = 1
+    service.version_id=version.id
     service.save()
     ssh_machine_shell(service.ip, option='on', option_ip=service.ip)
 

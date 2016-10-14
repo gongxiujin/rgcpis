@@ -178,7 +178,7 @@ def renew_services():
         if option == 'now':
             flash(u'机器正在重装中，请注意日志', 'success')
             if cluster == 1:
-                service.old_version_id = service.version_id
+                service.new_version_id = service
                 service.version_id = version
                 service.iscsi_status = 0
                 shutdown_server(service.ip)
@@ -287,10 +287,10 @@ def start_disckless():
     # try:
     save_machinerecord_log(request_ip, u'开始重装系统', request_ip)
     service = Service.query.filter_by(ip=request_ip).first()
-    version = ServiceVersion.query.filter_by(id=service.version_id).first()
     if service.iscsi_status == 0:
-        start_disckless_reload(service, 'upgrade', version)
+        start_disckless_reload(service, 'upgrade', service.new_version)
     else:
+        version = ServiceVersion.query.filter_by(id=service.version_id).first()
         start_disckless_reload(service, 'reboot', version)
     return json_response(0)
     # except NotExisted as ne:

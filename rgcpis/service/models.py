@@ -19,6 +19,9 @@ class Service(db.Model):
     cluster_id = db.Column(db.Integer(), db.ForeignKey("service_cluster.id"))
     cluster = db.relationship("Cluster", backref=db.backref('cluster', lazy='dynamic'), uselist=False)
     update_ip = db.Column(db.String(15))
+    new_version_id = db.Column(db.ForeignKey('service_version.id'), nullable=True)
+    new_version = db.relationship("ServiceVersion", backref=db.backref('service', lazy='dynamic'), uselist=False,
+                                   foreign_keys=new_version_id)
 
     def __init__(self, ip, iscsi_status=None, cluster_id=2):
         self.ip = ip
