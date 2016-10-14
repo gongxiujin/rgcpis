@@ -136,11 +136,11 @@ def service_upload(service_id):
     elif cluster == 1:
         # try:
         from datetime import datetime
-        description = service.ip + '@' + datetime.strftime(datetime.now(), '%Y%m%d%H')
+        description = "vh{version}_{ip}@{date}".format(version=service.version, ip=service.ip, date=datetime.strftime(datetime.now(), '%Y%m%d%H'))
         service = service_last_options(service, request.remote_addr)
         service_version = ServiceVersion(version, description, type=2)
         service_version = service_version.save()
-        start_disckless_backup(service_version.id, service)
+        start_disckless_backup(service, service_version)
         service.version_id = service_version.id
         service.save()
         flash(u'备份母盘成功', 'success')
@@ -287,8 +287,11 @@ def start_disckless():
     # try:
     save_machinerecord_log(request_ip, u'开始重装系统', request_ip)
     service = Service.query.filter_by(ip=request_ip).first()
+    version = ServiceVersion.query.filter_by(id=service.version_id).first()
     if service.iscsi_status == 0:
-        start_disckless_reload(request_ip)
+        start_disckless_reload(service, 'upgrade', version)
+    else:
+        start_disckless_reload(service, 'reboot', version)
     return json_response(0)
     # except NotExisted as ne:
     #     current_app.logger.error(ne.description)

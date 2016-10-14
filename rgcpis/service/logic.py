@@ -209,7 +209,7 @@ def shutdown_server(ip):
     return result['status']
 
 
-def check_service_status(ip):
+def check_service_off(ip):
     while True:
         ipmat = thread_format_ip(ip)
         r = thread_ssh([ipmat], option='status')[0]
@@ -224,60 +224,66 @@ def check_service_status(ip):
                 break
 
 
-def start_disckless_reload(ip):
-    check_service_status(ip)
-    service = Service.query.filter_by(ip=ip).first()
-    disconnect = 'tgt-admin --delete iqn.2016-08.renderg.com:{}'.format(ip)
-    result = pexpect.spawn(disconnect)
+def zfx_without_result(ssh):
+    result = pexpect.spawn(ssh)
     if result.read():
         raise NotExisted(description=result.read())
-    save_machinerecord_log(ip, '停止映射', ip)
-    delete_disck = 'zfs destroy storage/vh{}_{}'.format(service.old_version.version, ip)
-    clone_disck = 'zfs clone storage/vh{version}_{description} storage/vh{version}_{ip}'.format(
-        version=service.version, description=service.version_description, ip=ip)
-    result = pexpect.spawn(delete_disck)
-    if result.read():
-        raise NotExisted(description=result.read())
-    save_machinerecord_log(ip, '更新ZFS:删除原有卷', ip)
-    result = pexpect.spawn(clone_disck)
-    if result.read():
-        raise NotExisted(description=result.read())
-    save_machinerecord_log(ip, '更新ZFS:克隆新卷', ip)
+
+
+def start_disckless_reload(service, operation, version):
+    thread = Thread(target=start_disckless_reload, args=(service, operation, version))
+    thread.start()
+
+
+def disckless_operation(service, operation, version):
+    check_service_off(service.ip)
+    zfx_without_result('tgt-admin --delete iqn.2016-08.renderg.com:{}'.format(service.ip))
+    save_machinerecord_log(service.ip, '停止映射成功', service.ip)
+    if operation != 'upload':
+        zfx_without_result('zfs destroy storage/vh{}_{}'.format(service.version, service.ip))
+        save_machinerecord_log(service.ip, '更新ZFS:删除原有卷成功', service.ip)
+    else:
+        zfx_without_result('zfs snapshot storage/{}'.format(version.version_description))
+        save_machinerecord_log(service.ip, '备份建立快照成功', service.ip)
+        service.status = 6
+        service = service.save()
+    zfx_without_result(
+        'zfs clone storage/{description} storage/vh{version}_{ip}'.format(version=version.version,
+                                                                          description=version.version_description,
+                                                                          ip=service.ip))
+    save_machinerecord_log(service.ip, '更新ZFS:克隆新卷成功', service.ip)
     tgt_conf = '''<target iqn.2016-08.renderg.com:{ip}>\rbacking-store /dev/storage/vh{version}_{ip}\r</target>'''.format(
-        ip=ip, version=service.version)
-    with open('/etc/tgt/conf.d/{}.conf'.format(ip), 'w+') as f:
+        ip=service.ip, version=version.version)
+    with open('/etc/tgt/conf.d/{}.conf'.format(service.ip), 'w+') as f:
         f.write(tgt_conf)
         f.close()
-    save_machinerecord_log(ip, '更新配置文件', ip)
-    update_tgt = 'tgt-admin --update iqn.2016-08.renderg.com:{}'.format(ip)
-    result = pexpect.spawn(update_tgt)
-    if result.read():
-        raise NotExisted(description=result.read())
-    save_machinerecord_log(ip, '更新tgt', ip)
+    save_machinerecord_log(service.ip, '更新配置文件成功', service.ip)
+    zfx_without_result('tgt-admin --update iqn.2016-08.renderg.com:{}'.format(service.ip))
+    save_machinerecord_log(service.ip, '更新tgt成功', service.ip)
     service.status = 1
     service.iscsi_status = 1
     service.save()
     ssh_machine_shell(service.ip, option='on', option_ip=service.ip)
 
-def disckless_backup(old_service, version_id):
-    shutdown_server(old_service.ip)
-    check_service_status(old_service.ip)
-    version = ServiceVersion.query.filter_by(id=version_id).first()
-    ssh = 'zfs clone storage/vh{version}_{description} storage/vh{new_version}_{ip}'.format(version=old_service.version,
-                                                                                            description=old_service.version_description,
-                                                                                            new_version=version.version,
-                                                                                            ip=old_service.ip)
-    result = pexpect.spawn(ssh)
-    if result.read():
-        raise NotExisted(description=result.read())
-    ssh = 'zfs snapshot storage/vh{}_{}'.format(version.version, version.version_description)
-    result = pexpect.spawn(ssh)
-    if result.read():
-        raise NotExisted(description=result.read())
-    old_service.status=6
-    ssh_machine_shell(old_service.ip, option='on', option_ip=old_service.ip)
+
+# def disckless_backup(old_service, version_id):
+#     shutdown_server(old_service.ip)
+#     check_service_status(old_service.ip)
+#     version = ServiceVersion.query.filter_by(id=version_id).first()
+#     ssh = 'zfs clone storage/vh{version}_{description} storage/vh{new_version}_{ip}'.format(version=old_service.version,
+#                                                                                             description=old_service.version_description,
+#                                                                                             new_version=version.version,
+#                                                                                             ip=old_service.ip)
+#     result = pexpect.spawn(ssh)
+#     if result.read():
+#         raise NotExisted(description=result.read())
+#     ssh = 'zfs snapshot storage/vh{}_{}'.format(version.version, version.version_description)
+#     result = pexpect.spawn(ssh)
+#     if result.read():
+#         raise NotExisted(description=result.read())
+#     old_service.status = 6
+#     ssh_machine_shell(old_service.ip, option='on', option_ip=old_service.ip)
 
 
-def start_disckless_backup(version_id, old_service):
-    thread = Thread(target=disckless_backup, args=(old_service, version_id))
-    thread.start()
+def start_disckless_backup(service, version):
+    start_disckless_reload(service, 'upload', version)
