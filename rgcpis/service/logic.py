@@ -254,13 +254,13 @@ def disckless_operation(service, operation, version):
             zfx_without_result('zfs destroy storage/vh{}_{}'.format(service.version, service.ip))
             save_machinerecord_log(service.ip, '更新ZFS:删除原有卷成功', service.ip)
         else:
-            zfx_without_result('zfs snapshot storage/{}'.format(version.version_description))
+            zfx_without_result('zfs snapshot storage/{}'.format(version.description))
             save_machinerecord_log(service.ip, '备份建立快照成功', service.ip)
             service.status = 6
             service = service.save()
         zfx_without_result(
             'zfs clone storage/{description} storage/vh{version}_{ip}'.format(version=version.version,
-                                                                              description=version.version_description,
+                                                                              description=version.description,
                                                                               ip=service.ip))
         save_machinerecord_log(service.ip, '更新ZFS:克隆新卷成功', service.ip)
         tgt_conf = '''<target iqn.2016-08.renderg.com:{ip}>\rbacking-store /dev/storage/vh{version}_{ip}\r</target>'''.format(
