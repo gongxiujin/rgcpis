@@ -141,7 +141,7 @@ def service_upload(service_id):
         service_version = ServiceVersion(version, description, type=2)
         service_version.save()
         service.iscsi_status = 2
-        service = service.save()
+        service.save()
         start_disckless_backup(service, service_version)
         flash(u'备份母盘成功', 'success')
         return redirect(request.referrer)

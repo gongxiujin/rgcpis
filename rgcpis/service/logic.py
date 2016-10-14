@@ -251,7 +251,7 @@ def disckless_operation(service, operation, version):
             zfx_without_result('zfs snapshot storage/{}'.format(version.description))
             save_machinerecord_log(service.ip, '备份建立快照成功', service.ip)
             service.status = 6
-            service = service.save()
+            service.save()
         zfx_without_result(
             'zfs clone storage/{description} storage/vh{version}_{ip}'.format(version=version.version,
                                                                               description=version.description,
