@@ -225,8 +225,9 @@ def check_service_off(ip):
 def zfx_without_result(ssh):
     print ssh
     result = pexpect.spawn(ssh)
-    if result.read():
-        raise NotExisted(description=result.read())
+    message = result.read()
+    if message:
+        raise NotExisted(description=message)
 
 
 def start_disckless_reload(service, operation, version):
@@ -254,7 +255,7 @@ def disckless_operation(service, operation, version):
                                                                               description=version.description,
                                                                               ip=service.ip))
         save_machinerecord_log(service.ip, '更新ZFS:克隆新卷成功', service.ip)
-        tgt_conf = '''<target iqn.2016-08.renderg.com:{ip}>\rbacking-store /dev/storage/vh{version}_{ip}\r</target>'''.format(
+        tgt_conf = '<target iqn.2016-08.renderg.com:{ip}>\nbacking-store /dev/storage/vh{version}_{ip}\n</target>'.format(
             ip=service.ip, version=version.version)
         with open('/etc/tgt/conf.d/{}.conf'.format(service.ip), 'w+') as f:
             f.write(tgt_conf)
