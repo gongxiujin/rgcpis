@@ -227,6 +227,7 @@ def zfx_without_result(ssh):
     result = pexpect.spawn(ssh)
     message = result.read()
     if message:
+        print 'error:  '+message
         raise NotExisted(description=message)
 
 
