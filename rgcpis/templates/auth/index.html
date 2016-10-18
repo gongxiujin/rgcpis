@@ -147,9 +147,9 @@
                             </td>
                         {% elif cluster==1 %}
                             <td>
-{#                            <a href="{{ url_for("service.single_service_option", options="reset", service_id=service.id) }}" onclick="return confirm('请确认是否要重启');"><span class="glyphicon glyphicon-repeat" aria-hidden="true" title="重启"></span></a>#}
 {#                            <a href="{{ url_for("service.single_service_option", options="soft", service_id=service.id) }}" onclick="return confirm('请确认是否要关机');"><span class="glyphicon glyphicon-off" aria-hidden="true" title="关机"></span></a>#}
-                            <a href="#" data-toggle="modal" data-target="#disckModal" data-whatever="{{ service.id }}"><span class="glyphicon glyphicon-cloud-upload" aria-hidden="true" title="备份并上传版本"></span></a>
+                                <a href="#" data-toggle="modal" data-target="#disckModal" data-whatever="{{ service.id }}"><span class="glyphicon glyphicon-cloud-upload" aria-hidden="true" title="备份并上传版本"></span></a>
+                                <a href="{{ url_for("service.disckless_restart", options="reset", service_id=service.id) }}" onclick="return confirm('请确认是否要重启');"><span class="glyphicon glyphicon-repeat" aria-hidden="true" title="重启"></span></a>
                             </td>
                         {% endif %}
                     </tr>

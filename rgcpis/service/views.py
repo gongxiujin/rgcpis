@@ -103,6 +103,25 @@ def single_service_option(options, service_id):
         flash(u'操作成功', "success")
     return redirect(request.referrer)
 
+@service.route('/disckless_restart/<string:options>/<int:service_id>')
+@login_required
+def disckless_restart(options, service_id):
+    option_ip = request.remote_addr
+    service = Service.query.filter_by(id=service_id).first()
+    if service.status == 0 and options == "soft":
+        flash(u"机器已经关机", "danger")
+    elif service.status == 2 and options == "reset":
+        flash(u"已经在重启中", "danger")
+    elif service.status == 1 and options == 'on':
+        flash(u"已经开机", "danger")
+    else:
+        service.status = 2
+        service.iscsi_status = 1
+        shutdown_server(service.ip)
+        save_machinerecord_log(service.ip, '服务器开始重启', option_ip)
+        flash(u'操作成功', "success")
+    return redirect(request.referrer)
+
 
 @service.route('/service_upload/<int:service_id>', methods=["POST"])
 @login_required
