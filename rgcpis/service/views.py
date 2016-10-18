@@ -128,57 +128,61 @@ def disckless_restart(options, service_id):
 # @check_ipxe_status
 def service_upload(service_id):
     import re
-    cluster = request.args.get('cluster', 2, type=int)
-    service = Service.query.filter_by(id=service_id).first_or_404()
-    version = request.form.get("new_version")
-    mach = re.match(VERSION_RE, version)
-    if not mach:
-        flash(u'版本号格式错误', 'danger')
-    description = request.form.get("description")
-    service_version = ServiceVersion.query.filter_by(version=version).first()
-    cluster = service.cluster_id
-    if service_version:
-        flash(u'版本号已存在', 'danger')
-        return redirect(request.referrer)
-    if cluster == 2:
-        if version and description:
-            service_version = ServiceVersion(version, description)
-            service_version = service_version.save()
-            service = service_last_options(service, request.remote_addr)
-            service.version_id = service_version.id
-            service.status = 4
-            service = service.save()
-            ssh_machine_shell(service.ip, option='on', option_ip=request.remote_addr)
-            flash(u'版本上传中，请稍后', 'success')
+    try:
+        cluster = request.args.get('cluster', 2, type=int)
+        service = Service.query.filter_by(id=service_id).first_or_404()
+        version = request.form.get("new_version")
+        mach = re.match(VERSION_RE, version)
+        if not mach:
+            flash(u'版本号格式错误', 'danger')
+        description = request.form.get("description")
+        service_version = ServiceVersion.query.filter_by(version=version).first()
+        cluster = service.cluster_id
+        if service_version:
+            flash(u'版本号已存在', 'danger')
             return redirect(request.referrer)
+        if cluster == 2:
+            if version and description:
+                service_version = ServiceVersion(version, description)
+                service_version = service_version.save()
+                service = service_last_options(service, request.remote_addr)
+                service.version_id = service_version.id
+                service.status = 4
+                service = service.save()
+                ssh_machine_shell(service.ip, option='on', option_ip=request.remote_addr)
+                flash(u'版本上传中，请稍后', 'success')
+                return redirect(request.referrer)
+            return redirect(request.referrer)
+        elif cluster == 1:
+            # try:
+            from datetime import datetime
+            description = "vh{version}_{ip}@{date}".format(version=service.version, ip=service.ip, date=datetime.strftime(datetime.now(), '%Y%m%d%H'))
+            service = service_last_options(service, request.remote_addr)
+            service_version = ServiceVersion(version, description, type=2)
+            service_version.save()
+            service.iscsi_status = 2
+            service.new_version_id = service_version.id
+            service.save()
+            shutdown_server(service.ip)
+            flash(u'备份母盘成功', 'success')
+            return redirect(request.referrer)
+    except NotExisted as ne:
+        current_app.logger.error(ne.description)
+        flash('error:' + ne.description, 'danger')
         return redirect(request.referrer)
-    elif cluster == 1:
-        # try:
-        from datetime import datetime
-        description = "vh{version}_{ip}@{date}".format(version=service.version, ip=service.ip, date=datetime.strftime(datetime.now(), '%Y%m%d%H'))
-        service = service_last_options(service, request.remote_addr)
-        service_version = ServiceVersion(version, description, type=2)
-        service_version.save()
-        service.iscsi_status = 2
-        service.new_version_id = service_version.id
-        service.save()
-        shutdown_server(service.ip)
-        flash(u'备份母盘成功', 'success')
+    except Exception as e:
+        current_app.logger.error(e.message)
+        flash('error:' + e.message, 'danger')
         return redirect(request.referrer)
-        # except NotExisted as ne:
-        #     current_app.logger.error(ne.description)
-        #     flash('error:' + ne.description, 'danger')
-        #     return redirect(request.referrer)
-        # except Exception as e:
-        #     current_app.logger.error(e.message)
-        #     flash('error:' + e.message, 'danger')
-        #     return redirect(request.referrer)
 
+@service.route('/echo_log')
+def echo_log():
+    records = MachineRecord.query.order_by(MachineRecord.id.desc()).all()
+    return render_template('auth/ifame_log.html', records=records)
 
 @service.route('/echo_machine_record')
-def echolog():
-    records = MachineRecord.query.order_by(MachineRecord.id.desc()).all()
-    return render_template('auth/echo_log.html', records=records)
+def echo_machine_record():
+    return render_template('auth/echo_log.html')
 
 
 @service.route('/renew_services', methods=['POST'])
@@ -186,40 +190,40 @@ def echolog():
 #@check_ipxe_status
 @csrf.exempt
 def renew_services():
-    # try:
-    cluster = request.args.get('cluster', 2, type=int)
-    version = request.form.get('version', type=int)
-    option = request.form.get('option')
-    ids = request.form.getlist('service_id', type=int)
-    for service_id in ids:
-        service = Service.query.filter_by(id=service_id).first_or_404()
-        service = service_last_options(service, request.remote_addr)
-        service.status = 2
-        if option == 'now':
-            flash(u'机器正在重装中，请注意日志', 'success')
-            if cluster == 1:
-                service.new_version_id = version
-                service.iscsi_status = 0
-                shutdown_server(service.ip)
+    try:
+        cluster = request.args.get('cluster', 2, type=int)
+        version = request.form.get('version', type=int)
+        option = request.form.get('option')
+        ids = request.form.getlist('service_id', type=int)
+        for service_id in ids:
+            service = Service.query.filter_by(id=service_id).first_or_404()
+            service = service_last_options(service, request.remote_addr)
+            service.status = 2
+            if option == 'now':
+                flash(u'机器正在重装中，请注意日志', 'success')
+                if cluster == 1:
+                    service.new_version_id = version
+                    service.iscsi_status = 0
+                    shutdown_server(service.ip)
+                else:
+                    service.version_id = version
+                    ssh_machine_shell(service.ip, option='reset', option_ip=request.remote_addr)
             else:
-                service.version_id = version
-                ssh_machine_shell(service.ip, option='reset', option_ip=request.remote_addr)
-        else:
-            flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
-        service = service.save()
+                flash(u'机器将在下次重启时重装，请注意查看日志', 'success')
+            service = service.save()
+            return redirect(request.referrer)
+    except NotExisted as ne:
+        flash(ne.description, 'danger')
+        save_machinerecord_log(service.ip, ne.description, request.remote_addr)
+        current_app.logger.error('error in renew service')
+        current_app.logger.error(ne.description)
         return redirect(request.referrer)
-    # except NotExisted as ne:
-    #     flash(u'重装失败', 'danger')
-    #     save_machinerecord_log(service.ip, ne.description, request.remote_addr)
-    #     current_app.logger.error('error in renew service')
-    #     current_app.logger.error(ne.description)
-    #     return redirect(request.referrer)
-    # except Exception as e:
-    #     flash(u'重装失败', 'danger')
-    #     save_machinerecord_log(service.ip, e, request.remote_addr)
-    #     current_app.logger.error('error in renew service')
-    #     current_app.logger.error(e)
-    #     return redirect(request.referrer)
+    except Exception as e:
+        flash(u'重装失败', 'danger')
+        save_machinerecord_log(service.ip, e, request.remote_addr)
+        current_app.logger.error('error in renew service')
+        current_app.logger.error(e)
+        return redirect(request.referrer)
 
 
 @service.route("/check_start_status/aoe.ipxe")
@@ -303,20 +307,20 @@ def service_start():
 @service.route("/start_disckless/")
 def start_disckless():
     request_ip = request.remote_addr
-    # try:
-    save_machinerecord_log(request_ip, u'开始重装系统', request_ip)
-    service = Service.query.filter_by(ip=request_ip).first()
-    if service.iscsi_status == 0:
-        start_disckless_reload(service, 'upgrade', service.new_version)
-    elif service.iscsi_status == 1:
-        version = ServiceVersion.query.filter_by(id=service.version_id).first()
-        start_disckless_reload(service, 'reboot', version)
-    elif service.iscsi_status == 2:
-        start_disckless_reload(service, 'upload', service.new_version)
-    return json_response(0)
-    # except NotExisted as ne:
-    #     current_app.logger.error(ne.description)
-    #     save_machinerecord_log(request_ip, 'reload error:' + ne.description, request_ip)
-    # except Exception as e:
-    #     current_app.logger.error(e.message)
-    #     save_machinerecord_log(request_ip, 'reload error:' + e.message, request_ip)
+    try:
+        save_machinerecord_log(request_ip, u'开始重装系统', request_ip)
+        service = Service.query.filter_by(ip=request_ip).first()
+        if service.iscsi_status == 0:
+            start_disckless_reload(service, 'upgrade', service.new_version)
+        elif service.iscsi_status == 1:
+            version = ServiceVersion.query.filter_by(id=service.version_id).first()
+            start_disckless_reload(service, 'reboot', version)
+        elif service.iscsi_status == 2:
+            start_disckless_reload(service, 'upload', service.new_version)
+        return json_response(0)
+    except NotExisted as ne:
+        current_app.logger.error(ne.description)
+        save_machinerecord_log(request_ip, 'reload error:' + ne.description, request_ip)
+    except Exception as e:
+        current_app.logger.error(e.message)
+        save_machinerecord_log(request_ip, 'reload error:' + e.message, request_ip)

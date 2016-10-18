@@ -1,10 +1,11 @@
 {% extends "auth/index.html" %}
 {% block content %}
-<div class="col-md-3">
-{% for record in records %}
-{% if record.result %}
-<p>{{ record.create_time }}---{{ record.ip }}:{{ record.result }}</p>
-{% endif %}
-{% endfor %}
-</div>
+    <script type="application/javascript">
+    $(function(){
+        $('#service_manage').removeClass('active');
+        $('#log_echo').addClass('active');
+    });
+    </script>
+    <iframe class="container" height="600px" scrolling="yes" seamless="seamless" src="{{ url_for('service.echo_log') }}">
+    </iframe>
 {% endblock %}
