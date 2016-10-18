@@ -60,7 +60,7 @@ def thread_ssh(formt_ipmiip, option, option_ip=None):
         for ip_dict in formt_ipmiip:
             ips = ip_dict['real_ip'].split('.')[1]
 
-            if ips=='17':
+            if ips == '17':
                 ssh_add = 'ipmitool -H {ip} -U {username} -P {password} chassis power {option}'.format(
                     ip=ip_dict['ipmi_ip'], username=IPMI_SECRET[ips]['username'],
                     password=IPMI_SECRET[ips]['password'], option=option)
@@ -196,12 +196,9 @@ def service_last_options(service, ip):
     return service.save()
 
 
-def upload_machine_options(service, version):
-    pass
-
-
-def shutdown_server(ip):
+def shutdown_server(ip, operator):
     import rpyc
+    save_machinerecord_log(ip, '机器关机中', operator)
     c = rpyc.connect(ip, 60000)
     result = c.root.shutdown()
     if not result['status']:
@@ -219,15 +216,16 @@ def check_service_off(ip):
             if status == 'on':
                 time.sleep(3)
             else:
+                save_machinerecord_log(ip, '机器已关机', ip)
                 break
 
 
 def zfx_without_result(ssh):
-    print ssh
+    current_app.logger.error(ssh)
     result = pexpect.spawn(ssh)
     message = result.read()
     if message:
-        print 'error:  '+message
+        current_app.logger.error(message)
         raise NotExisted(description=message)
 
 
@@ -240,36 +238,48 @@ def start_disckless_reload(service, operation, version):
 def disckless_operation(service, operation, version):
     from manage import app
     with app.app_context():
-        check_service_off(service.ip)
-        zfx_without_result('tgt-admin --delete iqn.2016-08.renderg.com:{}'.format(service.ip))
-        save_machinerecord_log(service.ip, '停止映射成功', service.ip)
-        if operation != 'upload':
-            zfx_without_result('zfs destroy storage/vh{}_{}'.format(service.version, service.ip))
-            save_machinerecord_log(service.ip, '更新ZFS:删除原有卷成功', service.ip)
-        else:
-            zfx_without_result('zfs snapshot storage/{}'.format(version.description))
-            save_machinerecord_log(service.ip, '备份建立快照成功', service.ip)
-            service.status = 6
+        operaction = {1: '重启', 0: '升级', 2: '备份母盘'}
+        operact = operaction[service.iscsi_status]
+        try:
+            if service.iscsi_status == 99:
+                raise NotExisted(description='机器操作已经被触发')
+            service.iscsi_status = 99
             service.save()
-        zfx_without_result(
-            'zfs clone storage/{description} storage/vh{version}_{ip}'.format(version=version.version,
-                                                                              description=version.description,
-                                                                              ip=service.ip))
-        save_machinerecord_log(service.ip, '更新ZFS:克隆新卷成功', service.ip)
-        tgt_conf = '<target iqn.2016-08.renderg.com:{ip}>\nbacking-store /dev/storage/vh{version}_{ip}\n</target>'.format(
-            ip=service.ip, version=version.version)
-        with open('/etc/tgt/conf.d/{}.conf'.format(service.ip), 'w+') as f:
-            f.write(tgt_conf)
-            f.close()
-        save_machinerecord_log(service.ip, '更新配置文件成功', service.ip)
-        zfx_without_result('tgt-admin --update iqn.2016-08.renderg.com:{}'.format(service.ip))
-        save_machinerecord_log(service.ip, '更新tgt成功', service.ip)
-        service.status = 1
-        service.iscsi_status = 1
-        service.version_id=version.id
-        service.save()
-        ssh_machine_shell(service.ip, option='on', option_ip=service.ip)
-
+            save_machinerecord_log(service.ip, '机器开始' + operact, service.update_ip)
+            current_app.logger.error('')
+            check_service_off(service.ip)
+            zfx_without_result('tgt-admin --delete iqn.2016-08.renderg.com:{}'.format(service.ip))
+            save_machinerecord_log(service.ip, '停止映射成功', service.ip)
+            if operation != 'upload':
+                zfx_without_result('zfs destroy storage/vh{}_{}'.format(service.version, service.ip))
+                save_machinerecord_log(service.ip, '更新ZFS:删除原有卷成功', service.ip)
+            else:
+                zfx_without_result('zfs snapshot storage/{}'.format(version.description))
+                save_machinerecord_log(service.ip, '备份建立快照成功', service.ip)
+                service.status = 6
+                service.save()
+            zfx_without_result(
+                'zfs clone storage/{description} storage/vh{version}_{ip}'.format(version=version.version,
+                                                                                  description=version.description,
+                                                                                  ip=service.ip))
+            save_machinerecord_log(service.ip, '更新ZFS:克隆新卷成功', service.ip)
+            tgt_conf = '<target iqn.2016-08.renderg.com:{ip}>\nbacking-store /dev/storage/vh{version}_{ip}\n</target>'.format(
+                ip=service.ip, version=version.version)
+            with open('/etc/tgt/conf.d/{}.conf'.format(service.ip), 'w+') as f:
+                f.write(tgt_conf)
+                f.close()
+            save_machinerecord_log(service.ip, '更新配置文件成功', service.ip)
+            zfx_without_result('tgt-admin --update iqn.2016-08.renderg.com:{}'.format(service.ip))
+            save_machinerecord_log(service.ip, '更新tgt成功', service.ip)
+            service.status = 1
+            service.iscsi_status = 1
+            service.version_id = version.id
+            service.save()
+            ssh_machine_shell(service.ip, option='on', option_ip=service.ip)
+            save_machinerecord_log(service.ip, '机器' + operact + '成功,机器开机中', service.update_ip)
+        except NotExisted as ne:
+            current_app.logger.error(ne.description)
+            save_machinerecord_log(service.ip, '机器' + operact + '失败:' + ne.description, service.ip)
 
 # def disckless_backup(old_service, version_id):
 #     shutdown_server(old_service.ip)
@@ -288,8 +298,3 @@ def disckless_operation(service, operation, version):
 #         raise NotExisted(description=result.read())
 #     old_service.status = 6
 #     ssh_machine_shell(old_service.ip, option='on', option_ip=old_service.ip)
-
-
-def start_disckless_backup(service, version):
-    shutdown_server(service.ip)
-    start_disckless_reload(service, 'upload', version)

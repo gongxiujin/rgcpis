@@ -5,7 +5,7 @@ from flask_login import current_app, login_required, current_user
 from flask_login import request
 from rgcpis.service.forms import SearchServiceForm, AddMachineForm
 from rgcpis.service.logic import validate_ipaddress, ssh_machine_shell, \
-    service_last_options, start_disckless_reload, shutdown_server, start_disckless_backup, save_machinerecord_log, \
+    service_last_options, start_disckless_reload, shutdown_server, save_machinerecord_log, \
     NotExisted
 from rgcpis.service.models import Service, MachineRecord, ServiceVersion
 from rgcpis.utils.auth import json_response, response_file
@@ -117,7 +117,7 @@ def disckless_restart(options, service_id):
     else:
         service.status = 2
         service.iscsi_status = 1
-        shutdown_server(service.ip)
+        shutdown_server(service.ip, option_ip)
         save_machinerecord_log(service.ip, '服务器开始重启', option_ip)
         flash(u'操作成功', "success")
     return redirect(request.referrer)
@@ -163,7 +163,7 @@ def service_upload(service_id):
             service.iscsi_status = 2
             service.new_version_id = service_version.id
             service.save()
-            shutdown_server(service.ip)
+            shutdown_server(service.ip, request.remote_addr)
             flash(u'备份母盘成功', 'success')
             return redirect(request.referrer)
     except NotExisted as ne:
@@ -204,7 +204,7 @@ def renew_services():
                 if cluster == 1:
                     service.new_version_id = version
                     service.iscsi_status = 0
-                    shutdown_server(service.ip)
+                    shutdown_server(service.ip, request.remote_addr)
                 else:
                     service.version_id = version
                     ssh_machine_shell(service.ip, option='reset', option_ip=request.remote_addr)
