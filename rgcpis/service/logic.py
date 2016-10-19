@@ -3,9 +3,8 @@ import re
 import pexpect
 from rgcpis.service.forms import IPADDRESS_RE
 import time
-from datetime import datetime
 from flask_login import current_app
-from rgcpis.service.models import MachineRecord, Service, ServiceVersion
+from rgcpis.service.models import MachineRecord, Service
 from threading import Thread
 
 IPMI_OFFSET = 8
@@ -246,7 +245,6 @@ def disckless_operation(service, operation, version):
             service.iscsi_status = 99
             service.save()
             save_machinerecord_log(service.ip, '机器开始' + operact, service.update_ip)
-            current_app.logger.error('')
             check_service_off(service.ip)
             zfx_without_result('tgt-admin --delete iqn.2016-08.renderg.com:{}'.format(service.ip))
             save_machinerecord_log(service.ip, '停止映射成功', service.ip)

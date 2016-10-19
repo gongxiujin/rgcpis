@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from rgcpis.extensions import db
 from datetime import datetime
+from sqlalchemy import asc
 
 
 class Service(db.Model):
@@ -22,6 +23,9 @@ class Service(db.Model):
     new_version_id = db.Column(db.ForeignKey('service_version.id'), nullable=True)
     new_version = db.relationship("ServiceVersion", backref=db.backref('service', lazy='dynamic'), uselist=False,
                                    foreign_keys=new_version_id)
+    __mapper_args__ = {
+        'order_by': asc(ipmi_ip_mac)
+    }
 
     def __init__(self, ip, iscsi_status=None, cluster_id=2):
         self.ip = ip
